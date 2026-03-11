@@ -1,116 +1,16 @@
 {
   "sets": [
     {
-      "id": "run-1773264320041",
-      "heroUrl": "/outputs/run-1773264320041/04-final.png",
+      "id": "run-1773271892430",
+      "heroUrl": "/outputs/run-1773271892430/04-final.png",
       "stepUrls": [
-        "/outputs/run-1773264320041/01-before.png",
-        "/outputs/run-1773264320041/02-after-fill.png",
-        "/outputs/run-1773264320041/03-composite.png",
-        "/outputs/run-1773264320041/04-final.png"
-      ],
-      "variantUrls": [
-        "/outputs/variants/pdp/pdp.png",
-        "/outputs/variants/instagram-square/instagram-square.png",
-        "/outputs/variants/instagram-portrait/instagram-portrait.png"
-      ],
-      "createdAt": "2026-03-11T21:25:38.199Z"
-    },
-    {
-      "id": "run-1773266797188",
-      "heroUrl": "/outputs/run-1773266797188/04-final.png",
-      "stepUrls": [
-        "/outputs/run-1773266797188/01-before.png",
-        "/outputs/run-1773266797188/02-after-fill.png",
-        "/outputs/run-1773266797188/03-composite.png",
-        "/outputs/run-1773266797188/04-final.png"
+        "/outputs/run-1773271892430/01-before.png",
+        "/outputs/run-1773271892430/02-after-fill.png",
+        "/outputs/run-1773271892430/03-composite.png",
+        "/outputs/run-1773271892430/04-final.png"
       ],
       "variantUrls": [],
-      "createdAt": "2026-03-11T22:06:54.036Z"
-    },
-    {
-      "id": "run-1773266996920",
-      "heroUrl": "/outputs/run-1773266996920/04-final.png",
-      "stepUrls": [
-        "/outputs/run-1773266996920/01-before.png",
-        "/outputs/run-1773266996920/02-after-fill.png",
-        "/outputs/run-1773266996920/03-composite.png",
-        "/outputs/run-1773266996920/04-final.png"
-      ],
-      "variantUrls": [],
-      "createdAt": "2026-03-11T22:10:34.471Z"
-    },
-    {
-      "id": "run-1773268435635",
-      "heroUrl": "/outputs/run-1773268435635/04-final.png",
-      "stepUrls": [
-        "/outputs/run-1773268435635/01-before.png",
-        "/outputs/run-1773268435635/02-after-fill.png",
-        "/outputs/run-1773268435635/03-composite.png",
-        "/outputs/run-1773268435635/04-final.png"
-      ],
-      "variantUrls": [],
-      "createdAt": "2026-03-11T22:34:13.860Z"
-    },
-    {
-      "id": "run-1773268625551",
-      "heroUrl": "/outputs/run-1773268625551/04-final.png",
-      "stepUrls": [
-        "/outputs/run-1773268625551/01-before.png",
-        "/outputs/run-1773268625551/02-after-fill.png",
-        "/outputs/run-1773268625551/03-composite.png",
-        "/outputs/run-1773268625551/04-final.png"
-      ],
-      "variantUrls": [],
-      "createdAt": "2026-03-11T22:39:12.069Z"
-    },
-    {
-      "id": "run-1773268767968",
-      "heroUrl": "/outputs/run-1773268767968/04-final.png",
-      "stepUrls": [
-        "/outputs/run-1773268767968/01-before.png",
-        "/outputs/run-1773268767968/02-after-fill.png",
-        "/outputs/run-1773268767968/03-composite.png",
-        "/outputs/run-1773268767968/04-final.png"
-      ],
-      "variantUrls": [],
-      "createdAt": "2026-03-11T22:39:44.644Z"
-    },
-    {
-      "id": "run-1773268934400",
-      "heroUrl": "/outputs/run-1773268934400/04-final.png",
-      "stepUrls": [
-        "/outputs/run-1773268934400/01-before.png",
-        "/outputs/run-1773268934400/02-after-fill.png",
-        "/outputs/run-1773268934400/03-composite.png",
-        "/outputs/run-1773268934400/04-final.png"
-      ],
-      "variantUrls": [],
-      "createdAt": "2026-03-11T22:42:27.042Z"
-    },
-    {
-      "id": "run-1773269074298",
-      "heroUrl": "/outputs/run-1773269074298/04-final.png",
-      "stepUrls": [
-        "/outputs/run-1773269074298/01-before.png",
-        "/outputs/run-1773269074298/02-after-fill.png",
-        "/outputs/run-1773269074298/03-composite.png",
-        "/outputs/run-1773269074298/04-final.png"
-      ],
-      "variantUrls": [],
-      "createdAt": "2026-03-11T22:44:46.820Z"
-    },
-    {
-      "id": "run-1773269331386",
-      "heroUrl": "/outputs/run-1773269331386/04-final.png",
-      "stepUrls": [
-        "/outputs/run-1773269331386/01-before.png",
-        "/outputs/run-1773269331386/02-after-fill.png",
-        "/outputs/run-1773269331386/03-composite.png",
-        "/outputs/run-1773269331386/04-final.png"
-      ],
-      "variantUrls": [],
-      "createdAt": "2026-03-11T22:49:04.422Z"
+      "createdAt": "2026-03-11T23:31:55.522Z"
     }
   ]
 }

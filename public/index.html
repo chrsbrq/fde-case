@@ -52,6 +52,10 @@
     .set-card h3 { margin: 0 0 0.5rem 0; font-size: 1rem; }
     .set-card .set-thumbs { display: flex; flex-wrap: wrap; gap: 0.5rem; }
     .set-card .set-thumbs img { width: 80px; height: 80px; object-fit: cover; border-radius: 4px; cursor: pointer; }
+    .prompt-group { display: block; border: 1px solid #ccc; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; width: 100%; box-sizing: border-box; }
+    .prompt-group .field { margin-bottom: 0.5rem; }
+    .prompt-group .field:last-child { margin-bottom: 0; }
+    .prompt-group select, .prompt-group textarea, .prompt-group input[type="text"] { width: 100%; max-width: 100%; box-sizing: border-box; }
   </style>
 </head>
 <body>
@@ -70,40 +74,50 @@
         <input type="url" id="personUrl" name="personUrl" value="http://localhost:3000/person.png" placeholder="https://... or http://localhost:3000/person.png" required />
       </div>
       <div class="field full">
-        <label>Mask image URL (white = background to replace, black = foot/shoe to keep)</label>
+        <label>Mask image URL (white = background to replace, black = foot/shoe region)</label>
         <input type="url" id="maskUrl" name="maskUrl" value="http://localhost:3000/mask.png" placeholder="https://... or http://localhost:3000/mask.png" required />
       </div>
-      <div class="field full">
-        <label class="checkbox">
-          <input type="checkbox" id="generateFootShoeWithFirefly" name="generateFootShoeWithFirefly" />
-          Generate new foot/shoe with Firefly – replace the masked area with AI-generated foot and shoe (instead of keeping original or using a model image)
-        </label>
+      <div class="prompt-group">
+        <div class="field full">
+          <label>Prompt 1: Background style preset</label>
+          <select id="fillPromptPreset" name="fillPromptPreset" aria-label="Load a preset into the prompt below">
+            <option value="harajuku_day">Harajuku (day)</option>
+            <option value="harajuku_night">Harajuku (night)</option>
+            <option value="ginza_day">Ginza (day)</option>
+            <option value="ginza_night">Ginza (night)</option>
+            <option value="kyoto_day">Kyoto (day)</option>
+            <option value="kyoto_night">Kyoto (night)</option>
+            <option value="shibuya">Shibuya</option>
+            <option value="shinjuku">Shinjuku</option>
+            <option value="custom">Custom (edit below)</option>
+          </select>
+        </div>
+        <div class="field full">
+          <label>Prompt 1: Full prompt (editable; step 1 – replace background in mask)</label>
+          <textarea id="fillPrompt" name="fillPrompt" rows="4" placeholder="Full prompt for the new scene…"></textarea>
+        </div>
       </div>
-      <div class="field full" id="footShoePromptWrap">
-        <label>Foot/shoe prompt (used only when “Generate new foot/shoe with Firefly” is checked)</label>
-        <textarea id="footShoePrompt" name="footShoePrompt" rows="2" placeholder="e.g. person's foot wearing a modern sneaker, same lighting and perspective, photorealistic"></textarea>
-      </div>
-      <div class="field full">
-        <label>Model image URL (optional) – different look for foot/shoe; replaces the masked region before placing the sneaker (ignored if Firefly foot/shoe generation is on)</label>
-        <input type="url" id="modelUrl" name="modelUrl" value="" placeholder="http://localhost:3000/model.png or leave empty to keep original" />
-      </div>
-      <div class="field full">
-        <label>Background style preset</label>
-        <select id="fillPromptPreset" name="fillPromptPreset" aria-label="Load a preset into the prompt below">
-          <option value="harajuku_day">Harajuku (day)</option>
-          <option value="harajuku_night">Harajuku (night)</option>
-          <option value="ginza_day">Ginza (day)</option>
-          <option value="ginza_night">Ginza (night)</option>
-          <option value="kyoto_day">Kyoto (day)</option>
-          <option value="kyoto_night">Kyoto (night)</option>
-          <option value="shibuya">Shibuya</option>
-          <option value="shinjuku">Shinjuku</option>
-          <option value="custom">Custom (edit below)</option>
-        </select>
-      </div>
-      <div class="field full">
-        <label>Background prompt (editable; preset fills this, then you can change it)</label>
-        <textarea id="fillPrompt" name="fillPrompt" rows="4" placeholder="Full prompt for the new scene…"></textarea>
+      <div class="prompt-group">
+        <div class="field full">
+          <label>Prompt 2: Foot/shoe – Japanese fashion style (step 2 – Firefly Generative Fill)</label>
+          <select id="footShoePromptPreset" name="footShoePromptPreset" aria-label="Choose a Japanese fashion culture for the generated foot/shoe">
+            <option value="harajuku" selected>Harajuku – colorful street fashion, kawaii, playful mix</option>
+            <option value="ginza">Ginza – refined luxury, clean lines, high-end</option>
+            <option value="shibuya">Shibuya – urban streetwear, trendy youth culture</option>
+            <option value="kyoto">Kyoto – traditional-meets-modern, understated</option>
+            <option value="minimal">Minimal – Japanese minimalism, neutral, clean (Muji-like)</option>
+            <option value="streetwear">Streetwear – sneaker culture, casual, hype</option>
+            <option value="custom">Custom (edit below)</option>
+          </select>
+        </div>
+        <div class="field full">
+          <label>Prompt 2: Full prompt (editable)</label>
+          <textarea id="footShoePrompt" name="footShoePrompt" rows="4" placeholder="Full prompt for foot/shoe…"></textarea>
+        </div>
+        <div class="field full">
+          <label>Prompt 2 negative (optional) – e.g. cropped toes, extra limbs, distorted anatomy</label>
+          <input type="text" id="footShoeNegativePrompt" name="footShoeNegativePrompt" placeholder="cropped toes, extra limbs, distorted anatomy, neon, stylized" />
+        </div>
       </div>
       <div class="field full">
         <label class="checkbox">
@@ -155,12 +169,12 @@
           <label><input type="checkbox" name="channel" data-id="pdp" data-width="1200" data-height="1200" checked /> PDP 1200×1200</label>
           <label><input type="checkbox" name="channel" data-id="instagram-square" data-width="1080" data-height="1080" checked /> Instagram 1080×1080</label>
           <label><input type="checkbox" name="channel" data-id="instagram-portrait" data-width="1080" data-height="1350" checked /> Instagram 1080×1350</label>
-          <label><input type="checkbox" name="channel" data-id="instagram-landscape" data-width="1080" data-height="566" /> Instagram 1080×566</label>
-          <label><input type="checkbox" name="channel" data-id="facebook" data-width="1200" data-height="630" /> Facebook 1200×630</label>
-          <label><input type="checkbox" name="channel" data-id="pinterest" data-width="1000" data-height="1500" /> Pinterest 1000×1500</label>
-          <label><input type="checkbox" name="channel" data-id="twitter" data-width="1200" data-height="675" /> Twitter 1200×675</label>
-          <label><input type="checkbox" name="channel" data-id="linkedin" data-width="1200" data-height="627" /> LinkedIn 1200×627</label>
-          <label><input type="checkbox" name="channel" data-id="ooh" data-width="3000" data-height="1500" /> OOH 3000×1500</label>
+          <label><input type="checkbox" name="channel" data-id="instagram-landscape" data-width="1080" data-height="566" checked /> Instagram 1080×566</label>
+          <label><input type="checkbox" name="channel" data-id="facebook" data-width="1200" data-height="630" checked /> Facebook 1200×630</label>
+          <label><input type="checkbox" name="channel" data-id="pinterest" data-width="1000" data-height="1500" checked /> Pinterest 1000×1500</label>
+          <label><input type="checkbox" name="channel" data-id="twitter" data-width="1200" data-height="675" checked /> Twitter 1200×675</label>
+          <label><input type="checkbox" name="channel" data-id="linkedin" data-width="1200" data-height="627" checked /> LinkedIn 1200×627</label>
+          <label><input type="checkbox" name="channel" data-id="ooh" data-width="3000" data-height="1500" checked /> OOH 3000×1500</label>
         </div>
       </div>
       <div class="field">
@@ -377,36 +391,61 @@
       shinjuku: 'Shinjuku at night, kabukicho neon, rain-soaked streets, cinematic lighting, urban nightlife, wet reflective ground, bokeh lights. Change the scene only; keep the same camera angle and composition.',
     };
 
+    const FOOT_SHOE_PROMPTS = {
+      harajuku: 'Photorealistic foot and lower leg wearing a modern sneaker, Harajuku street fashion style, colorful and playful, kawaii aesthetic, same camera angle and lighting as the original image, natural skin tones',
+      ginza: 'Photorealistic foot and lower leg wearing a modern sneaker, Ginza luxury style, refined and clean lines, high-end fashion aesthetic, same camera angle and lighting as the original image, natural skin tones',
+      shibuya: 'Photorealistic foot and lower leg wearing a modern sneaker, Shibuya urban streetwear, trendy youth culture, same camera angle and lighting as the original image, natural skin tones',
+      kyoto: 'Photorealistic foot and lower leg wearing a modern sneaker, Kyoto style, traditional-meets-modern, understated and cultural, same camera angle and lighting as the original image, natural skin tones',
+      minimal: 'Photorealistic foot and lower leg wearing a modern sneaker, Japanese minimalism, neutral tones, clean Muji-like aesthetic, same camera angle and lighting as the original image, natural skin tones',
+      streetwear: 'Photorealistic foot and lower leg wearing a modern sneaker, Japanese streetwear and sneaker culture, casual hype style, same camera angle and lighting as the original image, natural skin tones',
+    };
+    const FOOT_SHOE_NEGATIVE_DEFAULT = 'cropped toes, extra limbs, distorted anatomy, neon, stylized, cartoon, artificial colors';
+    const footShoePromptPresetEl = document.getElementById('footShoePromptPreset');
+    const footShoePromptEl = document.getElementById('footShoePrompt');
+    const footShoeNegativeEl = document.getElementById('footShoeNegativePrompt');
+    if (footShoeNegativeEl && !footShoeNegativeEl.value.trim()) footShoeNegativeEl.value = FOOT_SHOE_NEGATIVE_DEFAULT;
+
+    function updateFootPromptFromPreset() {
+      if (footShoePromptPresetEl && footShoePromptEl) {
+        const preset = footShoePromptPresetEl.value;
+        if (preset !== 'custom' && FOOT_SHOE_PROMPTS[preset]) {
+          footShoePromptEl.value = FOOT_SHOE_PROMPTS[preset];
+        }
+      }
+    }
+    if (footShoePromptPresetEl) {
+      footShoePromptPresetEl.addEventListener('change', updateFootPromptFromPreset);
+      updateFootPromptFromPreset();
+    }
+
     fillPromptPreset.addEventListener('change', () => {
       if (fillPromptPreset.value !== 'custom') {
         fillPromptInput.value = BACKGROUND_PROMPTS[fillPromptPreset.value] || '';
       }
     });
+    fillPromptPreset.value = 'harajuku_night';
     fillPromptInput.value = BACKGROUND_PROMPTS.harajuku_night;
 
     formSneaker.addEventListener('submit', async (e) => {
       e.preventDefault();
       const personUrl = document.getElementById('personUrl').value.trim();
       const maskUrl = document.getElementById('maskUrl').value.trim();
-      const modelUrl = document.getElementById('modelUrl').value.trim();
       const sneakerUrl = document.getElementById('sneakerUrl').value.trim();
       const fillPrompt = fillPromptInput.value.trim();
+      const footShoePrompt = document.getElementById('footShoePrompt').value.trim();
+      const footShoeNegativePrompt = document.getElementById('footShoeNegativePrompt').value.trim();
       const invertMask = document.getElementById('invertMask').checked;
       const usePhotoshopApi = document.getElementById('usePhotoshopApi').checked;
       const useTargetSize = document.getElementById('useTargetSize').checked;
       const sneakerPrePositioned = document.getElementById('sneakerPrePositioned').checked;
-      const generateFootShoeWithFirefly = document.getElementById('generateFootShoeWithFirefly').checked;
-      const footShoePrompt = document.getElementById('footShoePrompt').value.trim();
       if (!personUrl || !maskUrl || !sneakerUrl) {
         status.textContent = 'Enter all three image URLs.';
         status.className = 'status error';
         return;
       }
       btnSneaker.disabled = true;
-      status.textContent = usePhotoshopApi
-        ? 'Running pipeline… (Firefly Fill + Photoshop API placement; may take a few minutes)'
-        : 'Running pipeline… (replace background, keep foot/shoe, place sneaker; may take a minute)';
-      if (generateFootShoeWithFirefly) status.textContent = 'Running pipeline… (background fill + Firefly foot/shoe generation + sneaker placement; may take a few minutes)';
+      status.textContent = 'Running pipeline… Step 1: background. Step 2: foot/shoe from mask. Step 3: Photoshop/Sharp layers + sneaker.';
+      if (usePhotoshopApi) status.textContent = 'Running pipeline… (Step 1 + Step 2 + Photoshop API for sneaker layer; may take a few minutes)';
       status.className = 'status';
       grid.innerHTML = '';
       logEl.textContent = '';
@@ -414,10 +453,9 @@
       if (useAsHeroBtn) useAsHeroBtn.style.display = 'none';
       try {
         const body = { personPhotoUrl: personUrl, maskImageUrl: maskUrl, sneakerPngUrl: sneakerUrl, invertMask, usePhotoshopApi, sneakerPrePositioned };
-        if (generateFootShoeWithFirefly) body.generateFootShoeWithFirefly = true;
-        if (footShoePrompt) body.footShoePrompt = footShoePrompt;
-        if (modelUrl) body.modelImageUrl = modelUrl;
         if (fillPrompt) body.fillPrompt = fillPrompt;
+        if (footShoePrompt) body.footShoePrompt = footShoePrompt;
+        if (footShoeNegativePrompt) body.footShoeNegativePrompt = footShoeNegativePrompt;
         if (useTargetSize) { body.targetWidth = 1344; body.targetHeight = 768; }
         const res = await fetch('/api/sneaker-on-foot/stream', {
           method: 'POST',

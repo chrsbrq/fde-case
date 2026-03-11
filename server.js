@@ -83,7 +83,7 @@ app.post('/api/generate/stream', asyncHandler(async (req, res) => {
 }));
 
 function buildPipelineOptions(body) {
-  const { personPhotoUrl, maskImageUrl, sneakerPngUrl, modelImageUrl, fillPrompt, overlayX, overlayY, overlayScale, outDir, invertMask, usePhotoshopApi, targetWidth, targetHeight, sneakerPrePositioned, generateFootShoeWithFirefly, footShoePrompt } = body;
+  const { personPhotoUrl, maskImageUrl, sneakerPngUrl, fillPrompt, overlayX, overlayY, overlayScale, outDir, invertMask, usePhotoshopApi, targetWidth, targetHeight, sneakerPrePositioned, footShoePrompt, footShoeNegativePrompt } = body;
   const pipelineOptions = {
     personPhotoUrl,
     maskImageUrl,
@@ -96,9 +96,8 @@ function buildPipelineOptions(body) {
     invertMask: invertMask === true,
     sneakerPrePositioned: sneakerPrePositioned === true,
   };
-  if (generateFootShoeWithFirefly === true) pipelineOptions.generateFootShoeWithFirefly = true;
   if (footShoePrompt && String(footShoePrompt).trim()) pipelineOptions.footShoePrompt = String(footShoePrompt).trim();
-  if (modelImageUrl && String(modelImageUrl).trim()) pipelineOptions.modelImageUrl = String(modelImageUrl).trim();
+  if (footShoeNegativePrompt && String(footShoeNegativePrompt).trim()) pipelineOptions.footShoeNegativePrompt = String(footShoeNegativePrompt).trim();
   if (targetWidth != null && targetHeight != null) {
     pipelineOptions.targetWidth = Number(targetWidth);
     pipelineOptions.targetHeight = Number(targetHeight);

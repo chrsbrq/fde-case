@@ -1,20 +1,24 @@
 /**
  * Pipeline: 3D sneaker on person's foot.
- * 1. Person image = structure reference. Mask: WHITE = background (replace), BLACK = person/foot/shoe (keep).
- * 2. Firefly Fill replaces only the white (background) area with the prompt; foot and shoe stay.
- * 3. Place sneaker into the scene at the dimensions/aspect of the protected (black) region.
+ *
+ * Flow (agentic – Firefly Generative Fill for foot/shoe):
+ * 1. Hero image + mask → Firefly Fill replaces BACKGROUND only (Prompt 1). Mask: white = replace, black = keep. Result = step 1 image.
+ * 2. Firefly Fill with structural reference: source = original hero (so composition/pose/scale are preserved), mask = white = foot/shoe
+ *    to replace. Firefly generates new shoe+foot inside the mask. We composite that layer over step 1 background = base for sneaker.
+ * 3. Photoshop API (or Sharp): add sneaker.png on top. Output = 04-final.png.
+ *
+ * Mask convention for step 2 (Fill): white (or opaque) = area to fill; black = area to keep. We invert the step-1 mask so
+ * foot/shoe = white before calling Fill, so the generated shoe+foot matches the mask size and position.
  *
  * Env / config:
- *   PERSON_PHOTO_URL    – URL of person photo (foot/shoe visible)
- *   MASK_IMAGE_URL      – URL of mask PNG (white = background to replace, black = structure to keep)
+ *   PERSON_PHOTO_URL    – URL of person/hero photo
+ *   MASK_IMAGE_URL      – URL of mask PNG (white = background to replace in step 1, black = foot/shoe)
  *   SNEAKER_PNG_URL     – URL of 3D sneaker render (transparent PNG)
- *   FILL_PROMPT         – describes the NEW BACKGROUND (e.g. "Tokyo Harajuku street at night")
- *   OUT_DIR             – optional
- *   shoeRegionFraction  – 0–1; use bottom fraction of structure bbox for shoe placement (default 0.5)
- *   targetWidth, targetHeight – if both set, resize person and mask to this size; Firefly and Photoshop use same dimensions (e.g. 1344×768 for 16:9).
- *   sneakerPrePositioned – if true, sneaker image is already same size as scene and in desired position; overlay at (0,0) with no scaling or placement math.
- *   generateFootShoeWithFirefly – if true, after background fill a second Firefly Fill generates new foot/shoe in the masked (black) region; then sneaker is overlaid.
- *   footShoePrompt – prompt for that second fill (default: photorealistic foot/shoe matching the scene).
+ *   FILL_PROMPT         – Prompt 1: new background
+ *   FOOT_SHOE_PROMPT    – Prompt for step 2: new shoe+foot (e.g. photorealistic, same camera angle)
+ *   FOOT_SHOE_NEGATIVE_PROMPT – optional; e.g. cropped toes, extra limbs, distorted anatomy
+ *   targetWidth, targetHeight – e.g. 1344×768
+ *   sneakerPrePositioned – if true, sneaker is full-size and overlaid at (0,0)
  */
 
 import 'dotenv/config';
@@ -200,78 +204,70 @@ async function runPipeline(options = {}) {
       .toBuffer();
   }
 
-  log(options, 'Saving before and after-fill...');
+  log(options, 'Step 1 done: background replaced. Saving 01-before, 02-after-fill...');
   await sharp(personBuf).png().toFile(path.join(outDir, '01-before.png'));
   await sharp(filledBuf).png().toFile(path.join(outDir, '02-after-fill.png'));
 
-  let baseForSneaker = filledBuf;
-  const generateFootShoeWithFirefly = options.generateFootShoeWithFirefly === true;
+  const step1Background = filledBuf;
   const footShoePrompt =
     options.footShoePrompt ||
     process.env.FOOT_SHOE_PROMPT ||
-    'person\'s foot wearing a modern sneaker, same lighting and perspective, photorealistic, matching the scene';
+    'Photorealistic foot and lower leg wearing a modern sneaker, Japanese street fashion style, Harajuku or Ginza aesthetic, same camera angle and lighting as the original image, natural skin tones, clean minimal look';
+  const footShoeNegativePrompt =
+    options.footShoeNegativePrompt ||
+    process.env.FOOT_SHOE_NEGATIVE_PROMPT ||
+    'cropped toes, extra limbs, distorted anatomy, neon, stylized, cartoon, artificial colors';
 
-  if (generateFootShoeWithFirefly) {
-    log(options, 'Generating new foot/shoe in mask region with Firefly Fill...');
-    const footShoeMaskBuf = await sharp(maskBuf).negate().png().toBuffer();
-    const fillSize2 = nearestFillSize(width, height);
-    const [filledSourceId, footShoeMaskId] = await Promise.all([
-      uploadImage(filledBuf, 'image/png'),
-      uploadImage(footShoeMaskBuf, 'image/png'),
-    ]);
-    const job2 = await fillImageAsync({
-      sourceUploadId: filledSourceId,
-      maskUploadId: footShoeMaskId,
-      prompt: footShoePrompt,
-      size: fillSize2,
-    });
-    const statusUrl2 = job2.statusUrl || (job2.jobId && `https://firefly-api.adobe.io/v3/status/${job2.jobId}`);
-    if (!statusUrl2) throw new Error('Foot/shoe Fill job did not return statusUrl');
-    const result2 = await pollUntilComplete(statusUrl2);
-    const footShoeImageUrl = result2?.outputs?.[0]?.image?.url ?? result2?.images?.[0]?.image?.url;
-    if (!footShoeImageUrl) throw new Error('No image URL in foot/shoe Fill result');
-    let footShoeBuf = await fetchBuffer(footShoeImageUrl);
-    const fsMeta = await sharp(footShoeBuf).metadata();
-    if (fsMeta.width !== width || fsMeta.height !== height) {
-      footShoeBuf = await sharp(footShoeBuf)
-        .resize(width, height, { fit: 'fill' })
-        .png()
-        .toBuffer();
-    }
-    baseForSneaker = footShoeBuf;
-    log(options, 'Firefly-generated foot/shoe applied.');
+  log(options, 'Step 2: Firefly Fill with original hero as structural reference – generating shoe+foot to match composition...');
+  const footShoeMaskBuf = await sharp(maskBuf).negate().png().toBuffer();
+  const fillSize2 = nearestFillSize(width, height);
+  const [heroSourceId, footShoeMaskId] = await Promise.all([
+    uploadImage(personBuf, 'image/png'),
+    uploadImage(footShoeMaskBuf, 'image/png'),
+  ]);
+  const job2 = await fillImageAsync({
+    sourceUploadId: heroSourceId,
+    maskUploadId: footShoeMaskId,
+    prompt: footShoePrompt,
+    size: fillSize2,
+    contentClass: 'photo',
+    negativePrompt: footShoeNegativePrompt,
+  });
+  const statusUrl2 = job2.statusUrl || (job2.jobId && `https://firefly-api.adobe.io/v3/status/${job2.jobId}`);
+  if (!statusUrl2) throw new Error('Foot/shoe Fill job did not return statusUrl');
+  const result2 = await pollUntilComplete(statusUrl2);
+  const footShoeImageUrl = result2?.outputs?.[0]?.image?.url ?? result2?.images?.[0]?.image?.url;
+  if (!footShoeImageUrl) throw new Error('No image URL in foot/shoe Fill result');
+  let footShoeResultBuf = await fetchBuffer(footShoeImageUrl);
+  const fsMeta = await sharp(footShoeResultBuf).metadata();
+  if (fsMeta.width !== width || fsMeta.height !== height) {
+    footShoeResultBuf = await sharp(footShoeResultBuf)
+      .resize(width, height, { fit: 'fill' })
+      .ensureAlpha()
+      .png()
+      .toBuffer();
   } else {
-    const modelImageUrl = options.modelImageUrl || process.env.MODEL_IMAGE_URL;
-    if (modelImageUrl) {
-      log(options, 'Replacing mask region (foot/shoe) with model image...');
-      const modelBuf = await fetchBuffer(modelImageUrl);
-      const modelResized = await sharp(modelBuf)
-        .resize(width, height, { fit: 'fill' })
-        .ensureAlpha()
-        .raw()
-        .toBuffer({ resolveWithObject: true });
-      const maskRaw = await sharp(maskBuf)
-        .resize(width, height, { fit: 'fill' })
-        .grayscale()
-        .raw()
-        .toBuffer({ resolveWithObject: true });
-      const { data: modelRgba, info } = modelResized;
-      const maskData = maskRaw.data;
-      for (let i = 0; i < info.width * info.height; i++) {
-        modelRgba[i * 4 + 3] = 255 - (maskData[i] || 0);
-      }
-      const modelWithMask = await sharp(modelRgba, {
-        raw: { width: info.width, height: info.height, channels: 4 },
-      })
-        .png()
-        .toBuffer();
-      baseForSneaker = await sharp(filledBuf)
-        .composite([{ input: modelWithMask, left: 0, top: 0 }])
-        .png()
-        .toBuffer();
-      log(options, 'Model image applied to foot/shoe region.');
-    }
+    footShoeResultBuf = await sharp(footShoeResultBuf).ensureAlpha().png().toBuffer();
   }
+  const footShoeRgba = await sharp(footShoeResultBuf).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  const invMaskRaw = await sharp(footShoeMaskBuf).resize(width, height, { fit: 'fill' }).grayscale().raw().toBuffer({ resolveWithObject: true });
+  const { data: rgba, info: rgbaInfo } = footShoeRgba;
+  const maskData = invMaskRaw.data;
+  for (let i = 0; i < rgbaInfo.width * rgbaInfo.height; i++) {
+    rgba[i * 4 + 3] = maskData[i] ?? 255;
+  }
+  const footShoeLayerBuf = await sharp(rgba, {
+    raw: { width: rgbaInfo.width, height: rgbaInfo.height, channels: 4 },
+  })
+    .png()
+    .toBuffer();
+  const baseForSneaker = await sharp(step1Background)
+    .composite([{ input: footShoeLayerBuf, left: 0, top: 0 }])
+    .png()
+    .toBuffer();
+  log(options, 'Step 2 done: foot/shoe generated with structural reference, composited over step 1 background.');
+
+  await sharp(baseForSneaker).png().toFile(path.join(outDir, '03-composite.png'));
 
   const sneakerPrePositioned = options.sneakerPrePositioned === true;
 
@@ -462,8 +458,7 @@ async function runPipeline(options = {}) {
       : composite;
   }
 
-  log(options, 'Saving composite and final...');
-  await sharp(composite).toFile(path.join(outDir, '03-composite.png'));
+  log(options, 'Saving 04-final (background + foot/shoe + sneaker)...');
   await sharp(finalBuf).toFile(path.join(outDir, '04-final.png'));
 
   log(options, `Done. Output: ${outDir}`);
