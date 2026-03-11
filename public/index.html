@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Agentic Assembly Line – DAM</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: system-ui, sans-serif; max-width: 900px; margin: 0 auto; padding: 1.5rem; }
+    h1 { font-size: 1.25rem; margin-bottom: 1rem; }
+    .form { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; margin-bottom: 1.5rem; }
+    .field { display: flex; flex-direction: column; gap: 0.25rem; }
+    .field label { font-size: 0.85rem; color: #555; }
+    input[type="text"], input[type="url"] { padding: 0.5rem; width: 100%; min-width: 200px; }
+    textarea { padding: 0.5rem; width: 100%; min-width: 200px; font: inherit; resize: vertical; }
+    select { padding: 0.5rem; width: 100%; min-width: 200px; font: inherit; }
+    .row { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .channels { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+    .channels label { display: flex; align-items: center; gap: 0.35rem; cursor: pointer; }
+    button { padding: 0.5rem 1rem; background: #1473e6; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    .status { margin: 1rem 0; min-height: 1.5rem; color: #555; }
+    .use-as-hero { margin-left: 0.75rem; background: #2d6a4f; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; }
+    .card { border: 1px solid #ddd; border-radius: 8px; overflow: hidden; }
+    .card img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; }
+    .card .meta { padding: 0.5rem 0.75rem; font-size: 0.8rem; color: #333; }
+    .card .meta strong { display: block; }
+    .error { color: #c00; }
+    .tabs { display: flex; gap: 0; margin-bottom: 1rem; border-bottom: 2px solid #ccc; }
+    .tab { padding: 0.5rem 1rem; background: #e0e0e0; color: #222; border: none; border-bottom: 2px solid transparent; cursor: pointer; font-size: 0.9rem; margin-bottom: -2px; }
+    .tab:hover { background: #d0d0d0; color: #111; }
+    .tab.active { background: #fff; color: #111; border-bottom-color: #1473e6; font-weight: 600; }
+    .panel.hidden { display: none; }
+    .form-sneaker .field.full { flex: 1 1 100%; min-width: 260px; }
+    .checkbox { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; }
+    .log-section { margin-top: 1.5rem; }
+    .log-title { font-size: 0.95rem; margin-bottom: 0.35rem; color: #555; }
+    .log { font-family: ui-monospace, monospace; font-size: 0.8rem; background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 6px; padding: 0.75rem; max-height: 200px; overflow: auto; white-space: pre-wrap; word-break: break-word; margin: 0; }
+    .card img { cursor: pointer; }
+    .lightbox { display: none; position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,0.9); align-items: center; justify-content: center; }
+    .lightbox.open { display: flex; }
+    .lightbox img { max-width: 95vw; max-height: 95vh; object-fit: contain; }
+    .lightbox .nav { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.2); color: #fff; border: none; padding: 1rem; cursor: pointer; font-size: 1.5rem; }
+    .lightbox .nav:hover { background: rgba(255,255,255,0.35); }
+    .lightbox .nav.prev { left: 0.5rem; }
+    .lightbox .nav.next { right: 0.5rem; }
+    .lightbox .close { position: absolute; top: 0.5rem; right: 0.5rem; background: rgba(255,255,255,0.2); color: #fff; border: none; padding: 0.5rem 0.75rem; cursor: pointer; font-size: 1rem; }
+    .lightbox .close:hover { background: rgba(255,255,255,0.35); }
+    .lightbox .counter { position: absolute; bottom: 1rem; left: 50%; transform: translateX(-50%); color: rgba(255,255,255,0.8); font-size: 0.9rem; }
+    .set-card { border: 1px solid #ddd; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
+    .set-card h3 { margin: 0 0 0.5rem 0; font-size: 1rem; }
+    .set-card .set-thumbs { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .set-card .set-thumbs img { width: 80px; height: 80px; object-fit: cover; border-radius: 4px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>Agentic Assembly Line – Generate &amp; view variants</h1>
+
+  <nav class="tabs" role="tablist" aria-label="Pipeline">
+    <button type="button" class="tab active" role="tab" id="tab-sneaker" aria-selected="true" aria-controls="panel-sneaker">Regional Hero Composition</button>
+    <button type="button" class="tab" role="tab" id="tab-hero" aria-selected="false" aria-controls="panel-hero">Long Tail Assets</button>
+    <button type="button" class="tab" role="tab" id="tab-sets" aria-selected="false" aria-controls="panel-sets">Sets (Hero + Variants)</button>
+  </nav>
+
+  <section id="panel-sneaker" class="panel" role="tabpanel" aria-labelledby="tab-sneaker">
+    <form id="formSneaker" class="form form-sneaker">
+      <div class="field full">
+        <label>Person photo URL (composition reference; foot/shoe kept)</label>
+        <input type="url" id="personUrl" name="personUrl" value="http://localhost:3000/person.png" placeholder="https://... or http://localhost:3000/person.png" required />
+      </div>
+      <div class="field full">
+        <label>Mask image URL (white = background to replace, black = foot/shoe to keep)</label>
+        <input type="url" id="maskUrl" name="maskUrl" value="http://localhost:3000/mask.png" placeholder="https://... or http://localhost:3000/mask.png" required />
+      </div>
+      <div class="field full">
+        <label class="checkbox">
+          <input type="checkbox" id="generateFootShoeWithFirefly" name="generateFootShoeWithFirefly" />
+          Generate new foot/shoe with Firefly – replace the masked area with AI-generated foot and shoe (instead of keeping original or using a model image)
+        </label>
+      </div>
+      <div class="field full" id="footShoePromptWrap">
+        <label>Foot/shoe prompt (used only when “Generate new foot/shoe with Firefly” is checked)</label>
+        <textarea id="footShoePrompt" name="footShoePrompt" rows="2" placeholder="e.g. person's foot wearing a modern sneaker, same lighting and perspective, photorealistic"></textarea>
+      </div>
+      <div class="field full">
+        <label>Model image URL (optional) – different look for foot/shoe; replaces the masked region before placing the sneaker (ignored if Firefly foot/shoe generation is on)</label>
+        <input type="url" id="modelUrl" name="modelUrl" value="" placeholder="http://localhost:3000/model.png or leave empty to keep original" />
+      </div>
+      <div class="field full">
+        <label>Background style preset</label>
+        <select id="fillPromptPreset" name="fillPromptPreset" aria-label="Load a preset into the prompt below">
+          <option value="harajuku_day">Harajuku (day)</option>
+          <option value="harajuku_night">Harajuku (night)</option>
+          <option value="ginza_day">Ginza (day)</option>
+          <option value="ginza_night">Ginza (night)</option>
+          <option value="kyoto_day">Kyoto (day)</option>
+          <option value="kyoto_night">Kyoto (night)</option>
+          <option value="shibuya">Shibuya</option>
+          <option value="shinjuku">Shinjuku</option>
+          <option value="custom">Custom (edit below)</option>
+        </select>
+      </div>
+      <div class="field full">
+        <label>Background prompt (editable; preset fills this, then you can change it)</label>
+        <textarea id="fillPrompt" name="fillPrompt" rows="4" placeholder="Full prompt for the new scene…"></textarea>
+      </div>
+      <div class="field full">
+        <label class="checkbox">
+          <input type="checkbox" id="invertMask" name="invertMask" />
+          Invert mask (my mask has black = background, white = structure)
+        </label>
+      </div>
+      <div class="field full">
+        <label>Sneaker render URL (transparent PNG)</label>
+        <input type="url" id="sneakerUrl" name="sneakerUrl" value="http://localhost:3000/sneaker.png" placeholder="https://... or http://localhost:3000/sneaker.png" required />
+      </div>
+      <div class="field full">
+        <label class="checkbox">
+          <input type="checkbox" id="sneakerPrePositioned" name="sneakerPrePositioned" checked />
+          Sneaker is full-size and pre-positioned. Use a PNG at 1344×768 with the shoe where you want it (transparency elsewhere); it will be overlaid at 0,0 as-is. If the PNG is a different size, it will be scaled to fit and centered without stretching.
+        </label>
+      </div>
+      <div class="field full">
+        <label class="checkbox">
+          <input type="checkbox" id="useTargetSize" name="useTargetSize" checked />
+          Output 16:9 at 1344×768 (resize person/mask and send same size to Firefly and Photoshop)
+        </label>
+      </div>
+      <div class="field full">
+        <label class="checkbox">
+          <input type="checkbox" id="usePhotoshopApi" name="usePhotoshopApi" checked />
+          Use Photoshop API for placement (requires S3 or Azure Blob on server)
+        </label>
+      </div>
+      <div class="field">
+        <button type="submit" id="btnSneaker">Run Regional Hero Composition</button>
+      </div>
+    </form>
+  </section>
+
+  <section id="panel-hero" class="panel hidden" role="tabpanel" aria-labelledby="tab-hero">
+    <form id="form" class="form">
+      <div class="field">
+        <label>Campaign name</label>
+        <input type="text" id="campaign" name="campaign" value="Fall-26-Tokyo-Sneaker-Drop" required />
+      </div>
+      <div class="field" style="flex: 1; min-width: 260px;">
+        <label>Hero image URL (from Step 1; e.g. hero.png)</label>
+        <input type="url" id="heroUrl" name="heroUrl" value="http://localhost:3000/hero.png" placeholder="http://localhost:3000/hero.png" required />
+      </div>
+      <div class="field">
+        <label>Output sizes (contextual crop + Generative Fill for gaps)</label>
+        <div class="channels">
+          <label><input type="checkbox" name="channel" data-id="pdp" data-width="1200" data-height="1200" checked /> PDP 1200×1200</label>
+          <label><input type="checkbox" name="channel" data-id="instagram-square" data-width="1080" data-height="1080" checked /> Instagram 1080×1080</label>
+          <label><input type="checkbox" name="channel" data-id="instagram-portrait" data-width="1080" data-height="1350" checked /> Instagram 1080×1350</label>
+          <label><input type="checkbox" name="channel" data-id="instagram-landscape" data-width="1080" data-height="566" /> Instagram 1080×566</label>
+          <label><input type="checkbox" name="channel" data-id="facebook" data-width="1200" data-height="630" /> Facebook 1200×630</label>
+          <label><input type="checkbox" name="channel" data-id="pinterest" data-width="1000" data-height="1500" /> Pinterest 1000×1500</label>
+          <label><input type="checkbox" name="channel" data-id="twitter" data-width="1200" data-height="675" /> Twitter 1200×675</label>
+          <label><input type="checkbox" name="channel" data-id="linkedin" data-width="1200" data-height="627" /> LinkedIn 1200×627</label>
+          <label><input type="checkbox" name="channel" data-id="ooh" data-width="3000" data-height="1500" /> OOH 3000×1500</label>
+        </div>
+      </div>
+      <div class="field">
+        <button type="submit" id="btn">Generate</button>
+      </div>
+    </form>
+  </section>
+
+  <section id="panel-sets" class="panel hidden" role="tabpanel" aria-labelledby="tab-sets">
+    <p>Hero images from Step 1 and their size variants from Step 2. Click any image to open in lightbox and move between images in the set.</p>
+    <div id="setsGrid" class="sets-grid"></div>
+  </section>
+
+  <div id="status" class="status" aria-live="polite"></div>
+  <div id="grid" class="grid"></div>
+  <div id="log-section" class="log-section">
+    <h2 class="log-title">Pipeline log</h2>
+    <pre id="log" class="log" aria-live="polite"></pre>
+  </div>
+
+  <div id="lightbox" class="lightbox" role="dialog" aria-modal="true" aria-label="Image viewer">
+    <button type="button" class="close" aria-label="Close">× Close</button>
+    <button type="button" class="nav prev" aria-label="Previous">‹</button>
+    <img id="lightboxImg" src="" alt="" />
+    <button type="button" class="nav next" aria-label="Next">›</button>
+    <span class="counter" id="lightboxCounter"></span>
+  </div>
+
+  <script>
+    const form = document.getElementById('form');
+    const formSneaker = document.getElementById('formSneaker');
+    const status = document.getElementById('status');
+    const grid = document.getElementById('grid');
+    const btn = document.getElementById('btn');
+    const btnSneaker = document.getElementById('btnSneaker');
+    const tabHero = document.getElementById('tab-hero');
+    const tabSneaker = document.getElementById('tab-sneaker');
+    const tabSets = document.getElementById('tab-sets');
+    const panelHero = document.getElementById('panel-hero');
+    const panelSneaker = document.getElementById('panel-sneaker');
+    const panelSets = document.getElementById('panel-sets');
+
+    function showPanel(panel) {
+      [panelHero, panelSneaker, panelSets].forEach((p) => p.classList.add('hidden'));
+      [tabHero, tabSneaker, tabSets].forEach((t) => { t.classList.remove('active'); t.setAttribute('aria-selected', 'false'); });
+      panel.classList.remove('hidden');
+      const which = panel === panelSneaker ? tabSneaker : panel === panelHero ? tabHero : tabSets;
+      which.classList.add('active'); which.setAttribute('aria-selected', 'true');
+    }
+    tabHero.addEventListener('click', () => showPanel(panelHero));
+    tabSneaker.addEventListener('click', () => showPanel(panelSneaker));
+    tabSets.addEventListener('click', () => { showPanel(panelSets); loadSets(); });
+
+    let lightboxUrls = [];
+    let lightboxIndex = 0;
+    const lightboxEl = document.getElementById('lightbox');
+    const lightboxImg = document.getElementById('lightboxImg');
+    const lightboxCounter = document.getElementById('lightboxCounter');
+
+    function openLightbox(urls, index) {
+      lightboxUrls = urls.map((u) => (u.startsWith('http') ? u : window.location.origin + (u.startsWith('/') ? u : '/' + u)));
+      lightboxIndex = Math.max(0, Math.min(index, lightboxUrls.length - 1));
+      lightboxEl.classList.add('open');
+      updateLightboxImage();
+      document.body.style.overflow = 'hidden';
+    }
+    function updateLightboxImage() {
+      if (lightboxUrls.length === 0) return;
+      const url = lightboxUrls[lightboxIndex];
+      lightboxImg.src = url;
+      lightboxImg.alt = 'Image ' + (lightboxIndex + 1);
+      lightboxCounter.textContent = (lightboxIndex + 1) + ' / ' + lightboxUrls.length;
+    }
+    function closeLightbox() {
+      lightboxEl.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+    document.getElementById('lightbox').querySelector('.close').addEventListener('click', closeLightbox);
+    lightboxEl.addEventListener('click', (e) => { if (e.target === lightboxEl) closeLightbox(); });
+    document.querySelector('.lightbox .nav.prev').addEventListener('click', (e) => { e.stopPropagation(); if (lightboxUrls.length) { lightboxIndex = (lightboxIndex - 1 + lightboxUrls.length) % lightboxUrls.length; updateLightboxImage(); } });
+    document.querySelector('.lightbox .nav.next').addEventListener('click', (e) => { e.stopPropagation(); if (lightboxUrls.length) { lightboxIndex = (lightboxIndex + 1) % lightboxUrls.length; updateLightboxImage(); } });
+    document.addEventListener('keydown', (e) => {
+      if (!lightboxEl.classList.contains('open')) return;
+      if (e.key === 'Escape') closeLightbox();
+      if (e.key === 'ArrowLeft') { lightboxIndex = (lightboxIndex - 1 + lightboxUrls.length) % lightboxUrls.length; updateLightboxImage(); }
+      if (e.key === 'ArrowRight') { lightboxIndex = (lightboxIndex + 1) % lightboxUrls.length; updateLightboxImage(); }
+    });
+
+    async function loadSets() {
+      const setsGrid = document.getElementById('setsGrid');
+      try {
+        const res = await fetch('/api/sets');
+        const data = await res.json();
+        const sets = data.sets || [];
+        if (!sets.length) {
+          setsGrid.innerHTML = '<p>No sets yet. Run Step 1 (Regional Hero Composition), then Step 2 (Long Tail Assets) to create a set.</p>';
+          return;
+        }
+        const origin = window.location.origin;
+        setsGrid.innerHTML = sets.map((set) => {
+          const allUrls = [...(set.stepUrls || []), ...(set.variantUrls || [])];
+          const thumbUrls = allUrls.slice(0, 12);
+          const urlsJson = JSON.stringify(allUrls).replace(/"/g, '&quot;');
+          return `
+            <div class="set-card" data-urls="${urlsJson}">
+              <h3>${set.id} — ${(set.stepUrls || []).length} steps + ${(set.variantUrls || []).length} variants</h3>
+              <div class="set-thumbs">
+                ${thumbUrls.map((u, i) => `<img src="${u.startsWith('http') ? u : origin + (u.startsWith('/') ? u : '/' + u)}" alt="" loading="lazy" data-index="${i}" />`).join('')}
+              </div>
+            </div>
+          `;
+        }).join('');
+        setsGrid.querySelectorAll('.set-card').forEach((card) => {
+          let urls;
+          try {
+            urls = JSON.parse(card.getAttribute('data-urls').replace(/&quot;/g, '"'));
+          } catch {
+            urls = [];
+          }
+          const fullUrls = urls.map((u) => (u.startsWith('http') ? u : origin + (u.startsWith('/') ? u : '/' + u)));
+          card.querySelectorAll('img').forEach((img) => {
+            const idx = parseInt(img.dataset.index, 10) || 0;
+            img.addEventListener('click', () => openLightbox(fullUrls, idx));
+          });
+        });
+      } catch {
+        setsGrid.innerHTML = '<p>Could not load sets.</p>';
+      }
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const campaign = document.getElementById('campaign').value.trim();
+      const heroUrl = document.getElementById('heroUrl').value.trim();
+      const channels = Array.from(document.querySelectorAll('input[name="channel"]:checked')).map((el) => ({
+        id: el.dataset.id,
+        width: parseInt(el.dataset.width, 10),
+        height: parseInt(el.dataset.height, 10),
+      }));
+
+      if (!channels.length) {
+        status.textContent = 'Select at least one output size.';
+        status.className = 'status error';
+        return;
+      }
+
+      btn.disabled = true;
+      status.textContent = 'Creating size variants (center + Generative Fill)…';
+      status.className = 'status';
+      grid.innerHTML = '';
+      logEl.textContent = '';
+
+      try {
+        const res = await fetch('/api/generate/stream', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ campaign, heroUrl, channels }),
+        });
+        if (!res.ok) {
+          const text = await res.text();
+          let data = {};
+          try { data = text ? JSON.parse(text) : {}; } catch (_) {}
+          throw new Error((data && data.error) || text || res.statusText || 'Request failed');
+        }
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        function processLine(line) {
+          if (!line.startsWith('data: ')) return;
+          try {
+            const payload = JSON.parse(line.slice(6));
+            if (payload.event === 'log' && payload.msg) {
+              logEl.textContent += payload.msg + '\n';
+              logEl.scrollTop = logEl.scrollHeight;
+            } else if (payload.event === 'result' && payload.generated) {
+              status.textContent = `Generated ${payload.generated.length} assets for ${payload.campaign || campaign}.`;
+              loadManifest(campaign);
+            } else if (payload.event === 'error' && payload.message) {
+              status.textContent = payload.message;
+              status.className = 'status error';
+              logEl.textContent += '\nError: ' + payload.message;
+            }
+          } catch (_) {}
+        }
+        while (true) {
+          const { value, done } = await reader.read();
+          buffer += value ? decoder.decode(value, { stream: !done }) : '';
+          const lines = buffer.split('\n');
+          if (!done) buffer = lines.pop() || '';
+          for (const line of lines) processLine(line);
+          if (done) break;
+        }
+      } catch (err) {
+        status.textContent = err.message || 'Request failed';
+        status.className = 'status error';
+        if (logEl.textContent) logEl.textContent += '\nError: ' + err.message;
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    const logEl = document.getElementById('log');
+    const fillPromptPreset = document.getElementById('fillPromptPreset');
+    const fillPromptInput = document.getElementById('fillPrompt');
+
+    const BACKGROUND_PROMPTS = {
+      harajuku_day: 'Harajuku district by day, Takeshita Street fashion boutiques and crepe stands, youthful street style, bright daylight, colorful shop fronts, Harajuku Tokyo. Low angle perspective, shallow depth of field. Change the scene only; keep the same camera angle and composition.',
+      harajuku_night: 'Harajuku district at night, neon signs and street lights, wet reflective pavement, Harajuku Tokyo nightlife, fashion district after dark, bokeh city lights, cinematic lighting matching the subject. Change the scene only; keep the same camera angle and composition.',
+      ginza_day: 'Ginza district Tokyo by day, luxury storefronts, marble and glass facades, Chuo-dori, refined high-end retail, golden hour or soft daylight, wet reflective pavement. Low angle perspective, shallow depth of field. Change the scene only; keep the same camera angle and composition.',
+      ginza_night: 'Ginza district Tokyo at night, illuminated luxury boutiques, neon and warm window light, wet reflective ground, Chuo-dori after dark, cinematic lighting. Change the scene only; keep the same camera angle and composition.',
+      kyoto_day: 'Kyoto district by day, traditional wooden machiya and temples, Gion or Higashiyama, soft natural light, cherry or maple tones, serene atmosphere, Kyoto Japan. Shallow depth of field. Change the scene only; keep the same camera angle and composition.',
+      kyoto_night: 'Kyoto district at night, lantern-lit streets, Gion or Pontocho, traditional Kyoto night scene, warm paper lanterns, atmospheric lighting, wet stones or pavement. Change the scene only; keep the same camera angle and composition.',
+      shibuya: 'Shibuya crossing, neon signs, wet reflective ground, low angle perspective, shallow depth of field, bokeh city lights, cinematic lighting matching the subject. Change the scene only; keep the same camera angle and composition.',
+      shinjuku: 'Shinjuku at night, kabukicho neon, rain-soaked streets, cinematic lighting, urban nightlife, wet reflective ground, bokeh lights. Change the scene only; keep the same camera angle and composition.',
+    };
+
+    fillPromptPreset.addEventListener('change', () => {
+      if (fillPromptPreset.value !== 'custom') {
+        fillPromptInput.value = BACKGROUND_PROMPTS[fillPromptPreset.value] || '';
+      }
+    });
+    fillPromptInput.value = BACKGROUND_PROMPTS.harajuku_night;
+
+    formSneaker.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const personUrl = document.getElementById('personUrl').value.trim();
+      const maskUrl = document.getElementById('maskUrl').value.trim();
+      const modelUrl = document.getElementById('modelUrl').value.trim();
+      const sneakerUrl = document.getElementById('sneakerUrl').value.trim();
+      const fillPrompt = fillPromptInput.value.trim();
+      const invertMask = document.getElementById('invertMask').checked;
+      const usePhotoshopApi = document.getElementById('usePhotoshopApi').checked;
+      const useTargetSize = document.getElementById('useTargetSize').checked;
+      const sneakerPrePositioned = document.getElementById('sneakerPrePositioned').checked;
+      const generateFootShoeWithFirefly = document.getElementById('generateFootShoeWithFirefly').checked;
+      const footShoePrompt = document.getElementById('footShoePrompt').value.trim();
+      if (!personUrl || !maskUrl || !sneakerUrl) {
+        status.textContent = 'Enter all three image URLs.';
+        status.className = 'status error';
+        return;
+      }
+      btnSneaker.disabled = true;
+      status.textContent = usePhotoshopApi
+        ? 'Running pipeline… (Firefly Fill + Photoshop API placement; may take a few minutes)'
+        : 'Running pipeline… (replace background, keep foot/shoe, place sneaker; may take a minute)';
+      if (generateFootShoeWithFirefly) status.textContent = 'Running pipeline… (background fill + Firefly foot/shoe generation + sneaker placement; may take a few minutes)';
+      status.className = 'status';
+      grid.innerHTML = '';
+      logEl.textContent = '';
+      const useAsHeroBtn = document.getElementById('useFinalAsHero');
+      if (useAsHeroBtn) useAsHeroBtn.style.display = 'none';
+      try {
+        const body = { personPhotoUrl: personUrl, maskImageUrl: maskUrl, sneakerPngUrl: sneakerUrl, invertMask, usePhotoshopApi, sneakerPrePositioned };
+        if (generateFootShoeWithFirefly) body.generateFootShoeWithFirefly = true;
+        if (footShoePrompt) body.footShoePrompt = footShoePrompt;
+        if (modelUrl) body.modelImageUrl = modelUrl;
+        if (fillPrompt) body.fillPrompt = fillPrompt;
+        if (useTargetSize) { body.targetWidth = 1344; body.targetHeight = 768; }
+        const res = await fetch('/api/sneaker-on-foot/stream', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        if (!res.ok) {
+          const text = await res.text();
+          let data = {};
+          try { data = text ? JSON.parse(text) : {}; } catch (_) {}
+          throw new Error((data && data.error) || text || res.statusText || 'Request failed');
+        }
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        function processLine(line) {
+          if (!line.startsWith('data: ')) return;
+          try {
+            const payload = JSON.parse(line.slice(6));
+            if (payload.event === 'log' && payload.msg) {
+              logEl.textContent += payload.msg + '\n';
+              logEl.scrollTop = logEl.scrollHeight;
+            } else if (payload.event === 'result' && payload.urls) {
+              const u = payload.urls;
+              const baseUrl = window.location.origin;
+              const stepUrls = [u.before, u.afterFill, u.composite, u.final];
+              const q = '?t=' + Date.now();
+              const steps = [
+                { url: u.before + q, label: '1. Before' },
+                { url: u.afterFill + q, label: '2. After fill' },
+                { url: u.composite + q, label: '3. Composite' },
+                { url: u.final + q, label: '4. Final' },
+              ];
+              grid.innerHTML = steps.map((s) => `
+                <div class="card">
+                  <img src="${s.url}" alt="${s.label}" loading="lazy" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22><rect fill=%22%23eee%22 width=%22100%22 height=%22100%22/><text x=%2250%22 y=%2250%22 fill=%22%23999%22 text-anchor=%22middle%22 dy=%22.3em%22>No preview</text></svg>'">
+                  <div class="meta"><strong>${s.label}</strong></div>
+                </div>
+              `).join('');
+              grid.querySelectorAll('.card img').forEach((img, i) => {
+                img.addEventListener('click', () => openLightbox(stepUrls.map((x) => baseUrl + x), i));
+              });
+              status.textContent = 'Done. Before → After fill → Composite → Final.';
+              const heroUrlForStep2 = baseUrl + (payload.heroUrl || u.final);
+              document.getElementById('heroUrl').value = heroUrlForStep2;
+              let useAsHero = document.getElementById('useFinalAsHero');
+              if (!useAsHero) {
+                useAsHero = document.createElement('button');
+                useAsHero.type = 'button';
+                useAsHero.id = 'useFinalAsHero';
+                useAsHero.className = 'use-as-hero';
+                useAsHero.textContent = 'Use this hero in Long Tail Assets →';
+                useAsHero.addEventListener('click', () => {
+                  document.getElementById('heroUrl').value = heroUrlForStep2;
+                  tabHero.click();
+                });
+                status.after(useAsHero);
+              }
+              useAsHero.style.display = 'inline-block';
+            } else if (payload.event === 'error' && payload.message) {
+              status.textContent = payload.message;
+              status.className = 'status error';
+              logEl.textContent += '\nError: ' + payload.message;
+            }
+          } catch (_) {}
+        }
+
+        while (true) {
+          const { value, done } = await reader.read();
+          buffer += value ? decoder.decode(value, { stream: !done }) : '';
+          const lines = buffer.split('\n');
+          if (!done) buffer = lines.pop() || '';
+          for (const line of lines) processLine(line);
+          if (done) break;
+        }
+      } catch (err) {
+        status.textContent = err.message || 'Request failed';
+        status.className = 'status error';
+        if (logEl.textContent) logEl.textContent += '\nError: ' + err.message;
+      } finally {
+        btnSneaker.disabled = false;
+      }
+    });
+
+    async function loadManifest(campaignId) {
+      try {
+        const res = await fetch(`/api/campaigns/${encodeURIComponent(campaignId)}/manifest`);
+        const manifest = await res.json();
+        if (!manifest.assets?.length) {
+          grid.innerHTML = '<p>No assets in manifest.</p>';
+          return;
+        }
+        // Long Tail tab: show only size-variant assets (no market), one per channel (latest)
+        const variantOnly = manifest.assets.filter((a) => !a.market);
+        const byChannel = {};
+        variantOnly.forEach((a) => { byChannel[a.channel] = a; });
+        const toShow = Object.values(byChannel);
+        if (!toShow.length) {
+          grid.innerHTML = '<p>No size variants yet. Run the workflow above to generate.</p>';
+          return;
+        }
+        const variantUrls = toShow.map((a) => a.url.startsWith('/') ? a.url : '/' + a.url);
+        grid.innerHTML = toShow.map((a) => `
+          <div class="card">
+            <img src="${a.url}" alt="${a.market ? a.market + ' ' : ''}${a.channel}" loading="lazy" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22><rect fill=%22%23eee%22 width=%22100%22 height=%22100%22/><text x=%2250%22 y=%2250%22 fill=%22%23999%22 text-anchor=%22middle%22 dy=%22.3em%22>No preview</text></svg>'">
+            <div class="meta">
+              <strong>${a.market ? a.market + ' · ' : ''}${a.channel}</strong>
+              ${a.width}×${a.height}
+            </div>
+          </div>
+        `).join('');
+        grid.querySelectorAll('.card img').forEach((img, i) => {
+          img.addEventListener('click', () => openLightbox(variantUrls.map((u) => (u.startsWith('http') ? u : window.location.origin + u)), i));
+        });
+      } catch {
+        grid.innerHTML = '<p>Could not load manifest.</p>';
+      }
+    }
+
+    const campaignFromQuery = new URLSearchParams(location.search).get('campaign');
+    if (campaignFromQuery) {
+      document.getElementById('campaign').value = campaignFromQuery;
+      loadManifest(campaignFromQuery);
+    }
+  </script>
+</body>
+</html>
