@@ -74,8 +74,12 @@
         <input type="url" id="personUrl" name="personUrl" value="https://stfedcaseeus2.blob.core.windows.net/source/person.png" placeholder="Public URL (required for Runtime)" required />
       </div>
       <div class="field full">
-        <label>Mask image URL (white = background to replace, black = foot/shoe region)</label>
-        <input type="url" id="maskUrl" name="maskUrl" value="https://stfedcaseeus2.blob.core.windows.net/source/mask.png" placeholder="Public URL (required for Runtime)" required />
+        <label>Mask 1 URL (white = background to replace, black = foot – used for Firefly step 2)</label>
+        <input type="url" id="maskUrl" name="maskUrl" value="https://stfedcaseeus2.blob.core.windows.net/source/mask.png" placeholder="Public URL (required)" required />
+      </div>
+      <div class="field full">
+        <label>Mask 2 URL (black = background, white = foot – used for PSD layer mask on foot layer)</label>
+        <input type="url" id="mask2Url" name="mask2Url" value="https://stfedcaseeus2.blob.core.windows.net/source/mask2.png" placeholder="Public URL (required)" required />
       </div>
       <div class="prompt-group">
         <div class="field full">
@@ -142,10 +146,7 @@
         </label>
       </div>
       <div class="field full">
-        <label class="checkbox">
-          <input type="checkbox" id="usePhotoshopApi" name="usePhotoshopApi" checked />
-          Use Photoshop API for placement (requires S3 or Azure Blob on server)
-        </label>
+        <p class="field-hint">Step 3 uses the Photoshop Create PSD API (background + foot with layer mask + shoe). Azure storage is required.</p>
       </div>
       <div class="field">
         <button type="submit" id="btnSneaker">Run Regional Hero Composition</button>
@@ -430,29 +431,28 @@
       e.preventDefault();
       const personUrl = document.getElementById('personUrl').value.trim();
       const maskUrl = document.getElementById('maskUrl').value.trim();
+      const mask2Url = document.getElementById('mask2Url').value.trim();
       const sneakerUrl = document.getElementById('sneakerUrl').value.trim();
       const fillPrompt = fillPromptInput.value.trim();
       const footShoePrompt = document.getElementById('footShoePrompt').value.trim();
       const footShoeNegativePrompt = document.getElementById('footShoeNegativePrompt').value.trim();
       const invertMask = document.getElementById('invertMask').checked;
-      const usePhotoshopApi = document.getElementById('usePhotoshopApi').checked;
       const useTargetSize = document.getElementById('useTargetSize').checked;
       const sneakerPrePositioned = document.getElementById('sneakerPrePositioned').checked;
-      if (!personUrl || !maskUrl || !sneakerUrl) {
-        status.textContent = 'Enter all three image URLs.';
+      if (!personUrl || !maskUrl || !mask2Url || !sneakerUrl) {
+        status.textContent = 'Enter person, both masks, and sneaker URLs.';
         status.className = 'status error';
         return;
       }
       btnSneaker.disabled = true;
-      status.textContent = 'Running pipeline… Step 1: background. Step 2: foot/shoe from mask. Step 3: Photoshop/Sharp layers + sneaker.';
-      if (usePhotoshopApi) status.textContent = 'Running pipeline… (Step 1 + Step 2 + Photoshop API for sneaker layer; may take a few minutes)';
+      status.textContent = 'Running pipeline… Step 1: background. Step 2: foot/shoe. Step 3: Create PSD (background + foot + mask + shoe).';
       status.className = 'status';
       grid.innerHTML = '';
       logEl.textContent = '';
       const useAsHeroBtn = document.getElementById('useFinalAsHero');
       if (useAsHeroBtn) useAsHeroBtn.style.display = 'none';
       try {
-        const body = { personPhotoUrl: personUrl, maskImageUrl: maskUrl, sneakerPngUrl: sneakerUrl, invertMask, usePhotoshopApi, sneakerPrePositioned };
+        const body = { personPhotoUrl: personUrl, maskImageUrl: maskUrl, mask2Url, sneakerPngUrl: sneakerUrl, invertMask, sneakerPrePositioned };
         if (fillPrompt) body.fillPrompt = fillPrompt;
         if (footShoePrompt) body.footShoePrompt = footShoePrompt;
         if (footShoeNegativePrompt) body.footShoeNegativePrompt = footShoeNegativePrompt;
@@ -488,7 +488,7 @@
                 { url: u.before + q, label: '1. Before' },
                 { url: u.afterFill + q, label: '2. After fill' },
                 { url: u.composite + q, label: '3. Composite' },
-                { url: u.final + q, label: '4. Final' },
+                { url: u.final + q, label: '4. Final (PNG)' },
               ];
               grid.innerHTML = steps.map((s) => `
                 <div class="card">

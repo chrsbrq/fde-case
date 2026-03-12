@@ -1,6 +1,9 @@
 /**
- * Long-tail size variants: center hero in each channel size, use Firefly Generative Fill to fill gaps.
- * runResizeWithFill(campaign, heroUrl, channels) – no markets; one asset per channel.
+ * Step 2: Create size variants from the hero (04-final.png from Step 1).
+ * Input is already PNG at 1344×768. No masking, no resizing of the input.
+ * For each channel, crop/resize the hero to that channel's dimensions (Jimp).
+ *
+ * runResizeWithFill(campaign, heroUrl, channels) – variants only, one asset per channel.
  * runGenerate(campaign, heroUrl, markets, channels) – legacy: Firefly regenerate per market×channel.
  */
 
@@ -9,13 +12,10 @@ import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-// Sharp is lazy-loaded in runResizeWithFill/runGenerate to avoid "Cannot initialize the action more than once" in Adobe I/O Runtime.
-import { uploadImage, fillImageAsync, pollUntilComplete, nearestFillSize, generateObjectComposite, generateWithStructureRef, generatePromptOnly } from '../lib/firefly.js';
+import { uploadImage, pollUntilComplete, generateObjectComposite, generateWithStructureRef, generatePromptOnly } from '../lib/firefly.js';
 import { getPromptForMarket } from '../lib/styleKits.js';
 import { resizeToSpec } from '../lib/resize.js';
 import { appendToManifest, outputDir, outputVariantsDir, setVariantAssets } from '../lib/manifest.js';
-
-const OUTPUT_PATH = process.env.OUTPUT_PATH || './output';
 
 const HERO_CONTENT_TYPES = {
   '.png': 'image/png',
@@ -37,63 +37,20 @@ async function fetchBuffer(url) {
   return Buffer.from(data);
 }
 
-const FILL_EXTEND_PROMPT = 'Seamlessly extend the background to match the scene. Same lighting, atmosphere, and style. No new subjects or objects.';
-
-/**
- * Create base image (hero centered, fit inside target size with gaps) and mask (white = gaps to fill, black = keep).
- */
-async function createBaseAndMask(sharp, heroBuffer, targetWidth, targetHeight) {
-  const heroMeta = await sharp(heroBuffer).metadata();
-  const hw = heroMeta.width || targetWidth;
-  const hh = heroMeta.height || targetHeight;
-  const scale = Math.min(targetWidth / hw, targetHeight / hh);
-  const w = Math.round(hw * scale);
-  const h = Math.round(hh * scale);
-  const left = Math.round((targetWidth - w) / 2);
-  const top = Math.round((targetHeight - h) / 2);
-  const heroResized = await sharp(heroBuffer).resize(w, h, { fit: 'inside' }).png().toBuffer();
-  const baseBuffer = await sharp({
-    create: {
-      width: targetWidth,
-      height: targetHeight,
-      channels: 4,
-      background: { r: 32, g: 32, b: 32, alpha: 1 },
-    },
-  })
-    .composite([{ input: heroResized, left, top }])
-    .png()
-    .toBuffer();
-  const maskData = Buffer.alloc(targetWidth * targetHeight);
-  for (let y = 0; y < targetHeight; y++) {
-    for (let x = 0; x < targetWidth; x++) {
-      const inHero = x >= left && x < left + w && y >= top && y < top + h;
-      maskData[y * targetWidth + x] = inHero ? 0 : 255;
-    }
-  }
-  const maskBuffer = await sharp(maskData, {
-    raw: { width: targetWidth, height: targetHeight, channels: 1 },
-  })
-    .png()
-    .toBuffer();
-  return { baseBuffer, maskBuffer };
-}
-
 function log(spec, msg) {
   if (typeof spec.onLog === 'function') spec.onLog(msg);
 }
 
 /**
- * Long-tail assets: resize hero to each channel size using contextual crop + Generative Fill for gaps.
- * campaign, heroUrl, channels (no markets). Uses Firefly Fill to extend background in letterbox/pillarbox areas.
- * spec.onLog(msg) optional – called with progress messages for streaming UI.
+ * Create size variants from hero (04-final.png). No mask, no Firefly.
+ * For each channel, crop/resize hero to width×height with Jimp (cover), write PNG.
  */
 export async function runResizeWithFill(spec) {
-  const sharp = (await import('sharp')).default;
   const { campaign, heroUrl, channels } = spec;
   if (!campaign || !heroUrl || !channels?.length) {
     throw new Error('Missing required: campaign, heroUrl, channels');
   }
-  log(spec, 'Fetching hero image...');
+  log(spec, 'Fetching hero image (04-final.png from Step 1)...');
   let heroBuffer;
   try {
     heroBuffer = await fetchBuffer(heroUrl);
@@ -101,36 +58,16 @@ export async function runResizeWithFill(spec) {
     const msg = e?.response?.status ? `Hero URL returned ${e.response.status}` : (e?.message || String(e));
     throw new Error(`Could not fetch hero image from ${heroUrl}: ${msg}`);
   }
-  log(spec, `Hero loaded. Creating ${channels.length} size variant(s)...`);
+  log(spec, `Hero loaded. Creating ${channels.length} size variant(s) with Jimp (no mask, no Firefly)...`);
   const results = [];
   const variantEntries = [];
   for (let i = 0; i < channels.length; i++) {
     const ch = channels[i];
     const { id: channelId, width, height } = ch;
-    log(spec, `[${i + 1}/${channels.length}] ${channelId} ${width}×${height}: building base + mask...`);
-    const fillSize = nearestFillSize(width, height);
-    const { baseBuffer, maskBuffer } = await createBaseAndMask(sharp, heroBuffer, fillSize.width, fillSize.height);
-    log(spec, `[${i + 1}/${channels.length}] ${channelId}: uploading to Firefly, starting Fill...`);
-    const sourceId = await uploadImage(baseBuffer, 'image/png');
-    const maskId = await uploadImage(maskBuffer, 'image/png');
-    const job = await fillImageAsync({
-      sourceUploadId: sourceId,
-      maskUploadId: maskId,
-      prompt: FILL_EXTEND_PROMPT,
-      size: fillSize,
-    });
-    const statusUrl = job?.statusUrl || (job?.jobId && `https://firefly-api.adobe.io/v3/status/${job.jobId}`);
-    if (!statusUrl) throw new Error('Fill job did not return statusUrl');
-    log(spec, `[${i + 1}/${channels.length}] ${channelId}: waiting for Fill result...`);
-    const result = await pollUntilComplete(statusUrl);
-    const imageUrl = result?.outputs?.[0]?.image?.url ?? result?.images?.[0]?.image?.url;
-    if (!imageUrl) throw new Error('No image URL in Fill result');
-    let outBuffer = await fetchBuffer(imageUrl);
-    const outMeta = await sharp(outBuffer).metadata();
-    if (outMeta.width !== width || outMeta.height !== height) {
-      outBuffer = await resizeToSpec(outBuffer, width, height, sharp);
-    }
+    log(spec, `[${i + 1}/${channels.length}] ${channelId} ${width}×${height}: crop/resize...`);
+    const outBuffer = await resizeToSpec(heroBuffer, width, height);
     const dir = outputVariantsDir(channelId);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     const filename = `${channelId}.png`;
     const filePath = path.join(dir, filename);
     fs.writeFileSync(filePath, outBuffer);
@@ -145,7 +82,6 @@ export async function runResizeWithFill(spec) {
 }
 
 export async function runGenerate(spec) {
-  const sharp = (await import('sharp')).default;
   const { campaign, heroUrl, markets, channels, customModelId, heroContentType } = spec;
   if (!campaign || !heroUrl || !markets?.length || !channels?.length) {
     throw new Error('Missing required: campaign, heroUrl, markets, channels');
@@ -228,7 +164,7 @@ export async function runGenerate(spec) {
       if (!imageUrl) throw new Error('No image URL in Firefly result');
 
       const imageBuffer = await fetchBuffer(imageUrl);
-      const resized = await resizeToSpec(imageBuffer, width, height, sharp);
+      const resized = await resizeToSpec(imageBuffer, width, height);
 
       const dir = outputDir(campaign, market, channelId);
       const filename = `${market}_${channelId}.png`;
@@ -273,7 +209,6 @@ async function main() {
   }
 }
 
-// Only run CLI when this file is executed directly (not when imported by server.js)
 const __filename = fileURLToPath(import.meta.url);
 const isRunDirectly = process.argv[1] && path.resolve(process.argv[1]) === path.resolve(__filename);
 if (isRunDirectly) main();

@@ -10,18 +10,13 @@
     "generate": "node scripts/generateVariants.js",
     "sneaker-on-foot": "node scripts/run-sneaker-on-foot.js",
     "start": "node server.js",
-    "install:linux-sharp": "npm install --os=linux --cpu=x64 --include=optional sharp",
-    "deploy": "npm run install:linux-sharp && aio app deploy"
+    "deploy": "aio app deploy"
   },
   "dependencies": {
     "@azure/storage-blob": "^12.31.0",
     "axios": "^1.6.0",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
-    "sharp": "^0.33.5"
-  },
-  "optionalDependencies": {
-    "@img/sharp-libvips-linux-x64": "^0.33.0",
-    "@img/sharp-linux-x64": "^0.33.0"
+    "jimp": "^1.6.0"
   }
 }

@@ -11,7 +11,7 @@ import { fileURLToPath } from 'url';
 import { runResizeWithFill } from './scripts/generateVariants.js';
 import { runPipeline } from './scripts/sneakerOnFootPipeline.js';
 import { readManifest } from './lib/manifest.js';
-import { isStorageConfigured, getSignedUrlsForPhotoshop } from './lib/storageSignedUrls.js';
+import { isStorageConfigured, getSignedUrlsForCreatePsd } from './lib/storageSignedUrls.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 3000;
@@ -138,10 +138,11 @@ app.post('/api/generate/stream', asyncHandler(async (req, res) => {
 }));
 
 function buildPipelineOptions(body) {
-  const { personPhotoUrl, maskImageUrl, sneakerPngUrl, fillPrompt, overlayX, overlayY, overlayScale, outDir, invertMask, usePhotoshopApi, targetWidth, targetHeight, sneakerPrePositioned, footShoePrompt, footShoeNegativePrompt } = body;
+  const { personPhotoUrl, maskImageUrl, mask2Url, sneakerPngUrl, fillPrompt, overlayX, overlayY, overlayScale, outDir, invertMask, targetWidth, targetHeight, sneakerPrePositioned, footShoePrompt, footShoeNegativePrompt } = body;
   const pipelineOptions = {
     personPhotoUrl,
     maskImageUrl,
+    mask2Url,
     sneakerPngUrl,
     fillPrompt,
     overlayX,
@@ -157,11 +158,10 @@ function buildPipelineOptions(body) {
     pipelineOptions.targetWidth = Number(targetWidth);
     pipelineOptions.targetHeight = Number(targetHeight);
   }
-  if (usePhotoshopApi === true && isStorageConfigured()) {
+  if (isStorageConfigured()) {
     const keyPrefix = `sneaker-on-foot/${Date.now()}-${Math.random().toString(36).slice(2)}`;
-    pipelineOptions.getPhotoshopSignedUrls = async (baseBuf, layerBuf) => {
-      return getSignedUrlsForPhotoshop(baseBuf, layerBuf, keyPrefix);
-    };
+    pipelineOptions.getSignedUrlsForCreatePsd = (background, foot, footMask, shoe) =>
+      getSignedUrlsForCreatePsd(background, foot, footMask, shoe, keyPrefix);
   }
   return pipelineOptions;
 }
@@ -171,9 +171,12 @@ app.post('/api/sneaker-on-foot/stream', asyncHandler(async (req, res) => {
   if (!body.personPhotoUrl || !body.maskImageUrl || !body.sneakerPngUrl) {
     return res.status(400).json({ error: 'Missing personPhotoUrl, maskImageUrl, or sneakerPngUrl' });
   }
-  if (body.usePhotoshopApi === true && !isStorageConfigured()) {
+  if (!body.mask2Url) {
+    return res.status(400).json({ error: 'Missing mask2Url (Mask 2: white=foot, black=background, for PSD layer mask)' });
+  }
+  if (!isStorageConfigured()) {
     return res.status(400).json({
-      error: 'Photoshop API placement requires Azure storage. Set AZURE_STORAGE_* in .env.',
+      error: 'Create PSD requires Azure storage. Set AZURE_STORAGE_* in .env.',
     });
   }
   res.setHeader('Content-Type', 'text/event-stream');
@@ -207,16 +210,12 @@ app.post('/api/sneaker-on-foot/stream', asyncHandler(async (req, res) => {
       pipelineOptions.outDir = path.join(OUTPUT_PATH, runId);
       pipelineOptions.onLog = (msg) => send('log', { msg });
       const result = await runPipeline(pipelineOptions);
-      const finalPath = path.join(result.outDir, '04-final.png');
-      const heroPath = path.join(__dirname, 'public', 'hero.png');
-      if (fs.existsSync(finalPath)) {
-        fs.copyFileSync(finalPath, heroPath);
-      }
       const base = '/outputs/' + runId;
       const stepUrls = [
         base + '/01-before.png',
         base + '/02-after-fill.png',
         base + '/03-composite.png',
+        base + '/04-final.psd',
         base + '/04-final.png',
       ];
       const heroUrl = base + '/04-final.png';
@@ -229,7 +228,8 @@ app.post('/api/sneaker-on-foot/stream', asyncHandler(async (req, res) => {
           before: stepUrls[0],
           afterFill: stepUrls[1],
           composite: stepUrls[2],
-          final: stepUrls[3],
+          final: stepUrls[4],
+          finalPsd: stepUrls[3],
         },
       });
     }
@@ -248,9 +248,12 @@ app.post('/api/sneaker-on-foot', asyncHandler(async (req, res) => {
     if (!body.personPhotoUrl || !body.maskImageUrl || !body.sneakerPngUrl) {
       return res.status(400).json({ error: 'Missing personPhotoUrl, maskImageUrl, or sneakerPngUrl' });
     }
-    if (body.usePhotoshopApi === true && !isStorageConfigured() && !USE_RUNTIME_ACTIONS) {
+    if (!body.mask2Url) {
+      return res.status(400).json({ error: 'Missing mask2Url (Mask 2: white=foot, black=background)' });
+    }
+    if (!isStorageConfigured() && !USE_RUNTIME_ACTIONS) {
       return res.status(400).json({
-        error: 'Photoshop API placement requires Azure storage. Set AZURE_STORAGE_* in .env (see docs/PHOTOSHOP_API_PLACE_LAYER.md).',
+        error: 'Create PSD requires Azure storage. Set AZURE_STORAGE_* in .env.',
       });
     }
     const runId = 'run-' + Date.now();
@@ -272,7 +275,7 @@ app.post('/api/sneaker-on-foot', asyncHandler(async (req, res) => {
     const result = await runPipeline(pipelineOptions);
     const base = '/outputs/' + runId;
     const heroUrl = base + '/04-final.png';
-    addSet(runId, heroUrl, [base + '/01-before.png', base + '/02-after-fill.png', base + '/03-composite.png', base + '/04-final.png']);
+    addSet(runId, heroUrl, [base + '/01-before.png', base + '/02-after-fill.png', base + '/03-composite.png', base + '/04-final.psd', base + '/04-final.png']);
     res.json({
       runId,
       heroUrl,
@@ -282,6 +285,7 @@ app.post('/api/sneaker-on-foot', asyncHandler(async (req, res) => {
         afterFill: base + '/02-after-fill.png',
         composite: base + '/03-composite.png',
         final: base + '/04-final.png',
+        finalPsd: base + '/04-final.psd',
       },
     });
   } catch (e) {

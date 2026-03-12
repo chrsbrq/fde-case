@@ -11,6 +11,45 @@
       ],
       "variantUrls": [],
       "createdAt": "2026-03-11T23:31:55.522Z"
+    },
+    {
+      "id": "run-1773309265700",
+      "heroUrl": "/outputs/run-1773309265700/04-final.png",
+      "stepUrls": [
+        "/outputs/run-1773309265700/01-before.png",
+        "/outputs/run-1773309265700/02-after-fill.png",
+        "/outputs/run-1773309265700/03-composite.png",
+        "/outputs/run-1773309265700/04-final.psd",
+        "/outputs/run-1773309265700/04-final.png"
+      ],
+      "variantUrls": [],
+      "createdAt": "2026-03-12T09:54:59.261Z"
+    },
+    {
+      "id": "run-1773309556058",
+      "heroUrl": "/outputs/run-1773309556058/04-final.png",
+      "stepUrls": [
+        "/outputs/run-1773309556058/01-before.png",
+        "/outputs/run-1773309556058/02-after-fill.png",
+        "/outputs/run-1773309556058/03-composite.png",
+        "/outputs/run-1773309556058/04-final.psd",
+        "/outputs/run-1773309556058/04-final.png"
+      ],
+      "variantUrls": [],
+      "createdAt": "2026-03-12T09:59:53.629Z"
+    },
+    {
+      "id": "run-1773309713787",
+      "heroUrl": "/outputs/run-1773309713787/04-final.png",
+      "stepUrls": [
+        "/outputs/run-1773309713787/01-before.png",
+        "/outputs/run-1773309713787/02-after-fill.png",
+        "/outputs/run-1773309713787/03-composite.png",
+        "/outputs/run-1773309713787/04-final.psd",
+        "/outputs/run-1773309713787/04-final.png"
+      ],
+      "variantUrls": [],
+      "createdAt": "2026-03-12T10:02:26.423Z"
     }
   ]
 }
