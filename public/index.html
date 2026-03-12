@@ -482,13 +482,14 @@
             } else if (payload.event === 'result' && payload.urls) {
               const u = payload.urls;
               const baseUrl = window.location.origin;
-              const stepUrls = [u.before, u.afterFill, u.composite, u.final];
-              const q = '?t=' + Date.now();
+              const resolve = (url) => (url && url.startsWith('http') ? url : baseUrl + (url && url.startsWith('/') ? url : '/' + (url || '')));
+              const stepUrls = [u.before, u.afterFill, u.composite, u.final].map(resolve);
+              const cacheBuster = (url) => url + (url.includes('?') ? '&' : '?') + 't=' + Date.now();
               const steps = [
-                { url: u.before + q, label: '1. Before' },
-                { url: u.afterFill + q, label: '2. After fill' },
-                { url: u.composite + q, label: '3. Composite' },
-                { url: u.final + q, label: '4. Final (PNG)' },
+                { url: cacheBuster(resolve(u.before)), label: '1. Before' },
+                { url: cacheBuster(resolve(u.afterFill)), label: '2. After fill' },
+                { url: cacheBuster(resolve(u.composite)), label: '3. Composite' },
+                { url: cacheBuster(resolve(u.final)), label: '4. Final (PNG)' },
               ];
               grid.innerHTML = steps.map((s) => `
                 <div class="card">
@@ -497,10 +498,10 @@
                 </div>
               `).join('');
               grid.querySelectorAll('.card img').forEach((img, i) => {
-                img.addEventListener('click', () => openLightbox(stepUrls.map((x) => baseUrl + x), i));
+                img.addEventListener('click', () => openLightbox(stepUrls, i));
               });
               status.textContent = 'Done. Before → After fill → Composite → Final.';
-              const heroUrlForStep2 = baseUrl + (payload.heroUrl || u.final);
+              const heroUrlForStep2 = resolve(payload.heroUrl || u.final);
               document.getElementById('heroUrl').value = heroUrlForStep2;
               let useAsHero = document.getElementById('useFinalAsHero');
               if (!useAsHero) {

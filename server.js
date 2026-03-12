@@ -54,7 +54,8 @@ async function invokeRuntimeAction(url, body) {
     throw new Error(msg);
   }
   if (data.error) throw new Error(data.error);
-  return data;
+  // Runtime web action may wrap payload in .result
+  return data.result !== undefined ? data.result : data;
 }
 
 if (!fs.existsSync(OUTPUT_PATH)) fs.mkdirSync(OUTPUT_PATH, { recursive: true });

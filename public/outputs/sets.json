@@ -50,6 +50,81 @@
       ],
       "variantUrls": [],
       "createdAt": "2026-03-12T10:02:26.423Z"
+    },
+    {
+      "id": "run-1773310017203",
+      "heroUrl": "/photoshop/outputs/run-1773310017203/04-final.png",
+      "stepUrls": [
+        "https://stfedcaseeus2.blob.core.windows.net/photoshop/outputs/run-1773310017203/01-before.png?sv=2026-02-06&se=2026-03-13T10%3A07%3A22Z&sr=b&sp=r&sig=n%2BEWBsQodiP4pKhFM3CivvGefVpMENNWWeC6BqHaHqM%3D",
+        "https://stfedcaseeus2.blob.core.windows.net/photoshop/outputs/run-1773310017203/02-after-fill.png?sv=2026-02-06&se=2026-03-13T10%3A07%3A22Z&sr=b&sp=r&sig=LvCGxDl3HV7RUpP6JDnUTAv0VllRxnDKjECM7ACsGOg%3D",
+        "https://stfedcaseeus2.blob.core.windows.net/photoshop/outputs/run-1773310017203/03-composite.png?sv=2026-02-06&se=2026-03-13T10%3A07%3A22Z&sr=b&sp=r&sig=IJAbQl4jGYBbbBxH1A%2FB7E2Oq91yaGoChuZfUSuLNNc%3D",
+        "https://stfedcaseeus2.blob.core.windows.net/photoshop/outputs/run-1773310017203/04-final.psd?sv=2026-02-06&se=2026-03-13T10%3A07%3A22Z&sr=b&sp=r&sig=vESsEeUwk2vYnKJCX8fN%2FEr7lZdGrmh53NhdnGl%2FoeY%3D",
+        "https://stfedcaseeus2.blob.core.windows.net/photoshop/outputs/run-1773310017203/04-final.png?sv=2026-02-06&se=2026-03-13T10%3A07%3A22Z&sr=b&sp=r&sig=Z8NMlF9KrsPUzH2uuYDhzuBIRWGd8Ya2SXlWuWIgYqo%3D"
+      ],
+      "variantUrls": [],
+      "createdAt": "2026-03-12T10:07:23.111Z"
+    },
+    {
+      "id": "run-1773310094856",
+      "heroUrl": "/photoshop/outputs/run-1773310094856/04-final.png",
+      "stepUrls": [
+        "https://stfedcaseeus2.blob.core.windows.net/photoshop/outputs/run-1773310094856/01-before.png?sv=2026-02-06&se=2026-03-13T10%3A08%3A43Z&sr=b&sp=r&sig=iN6KIQZt6SXaS%2BFj9hBoGY8su0a1Vow4d6cy4b%2BrB0Y%3D",
+        "https://stfedcaseeus2.blob.core.windows.net/photoshop/outputs/run-1773310094856/02-after-fill.png?sv=2026-02-06&se=2026-03-13T10%3A08%3A43Z&sr=b&sp=r&sig=OSCqiZkchrv0NjwEYS1EsQhSW6Xi%2FXZpb8W5d0lXVV4%3D",
+        "https://stfedcaseeus2.blob.core.windows.net/photoshop/outputs/run-1773310094856/03-composite.png?sv=2026-02-06&se=2026-03-13T10%3A08%3A43Z&sr=b&sp=r&sig=A1T1yeOz8S960E7m0FmxhgFzovkxIVJ7qtbi6MNPU3o%3D",
+        "https://stfedcaseeus2.blob.core.windows.net/photoshop/outputs/run-1773310094856/04-final.psd?sv=2026-02-06&se=2026-03-13T10%3A08%3A43Z&sr=b&sp=r&sig=IhlmgPQyjYIb1TUBp5F5PI1TsfH%2BIVAWnLcS%2FK%2BYE0E%3D",
+        "https://stfedcaseeus2.blob.core.windows.net/photoshop/outputs/run-1773310094856/04-final.png?sv=2026-02-06&se=2026-03-13T10%3A08%3A43Z&sr=b&sp=r&sig=WVOG5ZpeLWqIaxjCl2iMSz9MFQ0zPQ1XktZaxfPyK3c%3D"
+      ],
+      "variantUrls": [],
+      "createdAt": "2026-03-12T10:08:43.736Z"
+    },
+    {
+      "id": "run-1773310840953",
+      "heroUrl": "https://stfedcaseeus2.blob.core.windows.net/photoshop/outputs/run-1773310840953/04-final.png?sv=2026-02-06&se=2026-03-13T10%3A21%3A18Z&sr=b&sp=r&sig=fhp4AX7o7fvPV8kk2a6V%2FkSKtadWtxlw8BtdMKJAMNI%3D",
+      "stepUrls": [
+        "https://stfedcaseeus2.blob.core.windows.net/photoshop/outputs/run-1773310840953/01-before.png?sv=2026-02-06&se=2026-03-13T10%3A21%3A18Z&sr=b&sp=r&sig=h5Nu6DfILMx44HG7b61oap4eIR%2BMK36BntyzuzE%2FWRQ%3D",
+        "https://stfedcaseeus2.blob.core.windows.net/photoshop/outputs/run-1773310840953/02-after-fill.png?sv=2026-02-06&se=2026-03-13T10%3A21%3A18Z&sr=b&sp=r&sig=nsYFbzPqG19Q%2BPZwv6GJHljWOOrnJXw2q4FZRYhCOs0%3D",
+        "https://stfedcaseeus2.blob.core.windows.net/photoshop/outputs/run-1773310840953/03-composite.png?sv=2026-02-06&se=2026-03-13T10%3A21%3A18Z&sr=b&sp=r&sig=vyR0SEpEoZ7%2FbVk7F0cqX7Y17Tlt1aqdmfHuDsSU0fU%3D",
+        "https://stfedcaseeus2.blob.core.windows.net/photoshop/outputs/run-1773310840953/04-final.psd?sv=2026-02-06&se=2026-03-13T10%3A21%3A18Z&sr=b&sp=r&sig=6lOzzOBNT9AKWmakin32jfrdQneUMHAa%2BFV9Y0RKQgE%3D",
+        "https://stfedcaseeus2.blob.core.windows.net/photoshop/outputs/run-1773310840953/04-final.png?sv=2026-02-06&se=2026-03-13T10%3A21%3A18Z&sr=b&sp=r&sig=fhp4AX7o7fvPV8kk2a6V%2FkSKtadWtxlw8BtdMKJAMNI%3D"
+      ],
+      "variantUrls": [],
+      "createdAt": "2026-03-12T10:21:18.712Z"
+    },
+    {
+      "id": "run-1773310983280",
+      "heroUrl": "https://stfedcaseeus2.blob.core.windows.net/photoshop/outputs/run-1773310983280/04-final.png?sv=2026-02-06&se=2026-03-13T10%3A23%3A28Z&sr=b&sp=r&sig=qDBg3OgwPi0Gnhcar0XerKX7d3FQ27OLeoOIhJZAJEo%3D",
+      "stepUrls": [
+        "https://stfedcaseeus2.blob.core.windows.net/photoshop/outputs/run-1773310983280/01-before.png?sv=2026-02-06&se=2026-03-13T10%3A23%3A28Z&sr=b&sp=r&sig=80TDvJow5Q7AIhRyn%2FWom8S1qgPoCY8%2F26vkmN542xU%3D",
+        "https://stfedcaseeus2.blob.core.windows.net/photoshop/outputs/run-1773310983280/02-after-fill.png?sv=2026-02-06&se=2026-03-13T10%3A23%3A28Z&sr=b&sp=r&sig=Q1rJFbpiGpHhc9tkhPJYNxLVHVz%2BR9h%2B%2BboakKhnvrQ%3D",
+        "https://stfedcaseeus2.blob.core.windows.net/photoshop/outputs/run-1773310983280/03-composite.png?sv=2026-02-06&se=2026-03-13T10%3A23%3A28Z&sr=b&sp=r&sig=WaFB5dCf2cfNLdg5TPXQ7XuCHfGz7EonMj4fZGOsYh4%3D",
+        "https://stfedcaseeus2.blob.core.windows.net/photoshop/outputs/run-1773310983280/04-final.psd?sv=2026-02-06&se=2026-03-13T10%3A23%3A28Z&sr=b&sp=r&sig=y3uhl6dwFLpm%2BtXpIGA0wbABe8Vy0ohcO%2FN2aqEI7sM%3D",
+        "https://stfedcaseeus2.blob.core.windows.net/photoshop/outputs/run-1773310983280/04-final.png?sv=2026-02-06&se=2026-03-13T10%3A23%3A28Z&sr=b&sp=r&sig=qDBg3OgwPi0Gnhcar0XerKX7d3FQ27OLeoOIhJZAJEo%3D"
+      ],
+      "variantUrls": [],
+      "createdAt": "2026-03-12T10:23:29.024Z"
+    },
+    {
+      "id": "run-1773311347900",
+      "heroUrl": "https://stfedcaseeus2.blob.core.windows.net/photoshop/outputs/run-1773311347900/04-final.png?sv=2026-02-06&se=2026-03-13T10%3A29%3A34Z&sr=b&sp=r&sig=y5CWG6F%2B%2BgQuqQd8OO7QFqOsj2V6%2FDD%2BUkzvQHnLJGs%3D",
+      "stepUrls": [
+        "https://stfedcaseeus2.blob.core.windows.net/photoshop/outputs/run-1773311347900/01-before.png?sv=2026-02-06&se=2026-03-13T10%3A29%3A34Z&sr=b&sp=r&sig=1xX7lhq48IUqKpdCzt02tFQ%2BMunIQB6SnJeB5ZnD4pg%3D",
+        "https://stfedcaseeus2.blob.core.windows.net/photoshop/outputs/run-1773311347900/02-after-fill.png?sv=2026-02-06&se=2026-03-13T10%3A29%3A34Z&sr=b&sp=r&sig=ZNEt3jENjHymZq%2B9o6xJZHZYX5zL3b9SeRzfw%2BgiAZs%3D",
+        "https://stfedcaseeus2.blob.core.windows.net/photoshop/outputs/run-1773311347900/03-composite.png?sv=2026-02-06&se=2026-03-13T10%3A29%3A34Z&sr=b&sp=r&sig=1Xx53kD%2BZdKg3NWau%2BHhcodxVLbEuiyrUODjUAS9w00%3D",
+        "https://stfedcaseeus2.blob.core.windows.net/photoshop/outputs/run-1773311347900/04-final.psd?sv=2026-02-06&se=2026-03-13T10%3A29%3A34Z&sr=b&sp=r&sig=bEgYbSdlpvqP%2BzwW5NtoIiQ90lzFOX%2BYfyQIWZFQVwc%3D",
+        "https://stfedcaseeus2.blob.core.windows.net/photoshop/outputs/run-1773311347900/04-final.png?sv=2026-02-06&se=2026-03-13T10%3A29%3A34Z&sr=b&sp=r&sig=y5CWG6F%2B%2BgQuqQd8OO7QFqOsj2V6%2FDD%2BUkzvQHnLJGs%3D"
+      ],
+      "variantUrls": [
+        "https://stfedcaseeus2.blob.core.windows.net/photoshop/outputs/variants/Fall-26-Tokyo-Sneaker-Drop/pdp/pdp.png?sv=2026-02-06&se=2026-03-13T10%3A30%3A29Z&sr=b&sp=r&sig=ySQDefbvds3hP7ry25w5BCyO2PrdWaDHM6kzu%2BlD%2BX0%3D",
+        "https://stfedcaseeus2.blob.core.windows.net/photoshop/outputs/variants/Fall-26-Tokyo-Sneaker-Drop/instagram-square/instagram-square.png?sv=2026-02-06&se=2026-03-13T10%3A30%3A30Z&sr=b&sp=r&sig=UXxF5Jf3TDxz0Q6BUxLkYgSiG%2FV6UPJd7PTigq6Ow4A%3D",
+        "https://stfedcaseeus2.blob.core.windows.net/photoshop/outputs/variants/Fall-26-Tokyo-Sneaker-Drop/instagram-portrait/instagram-portrait.png?sv=2026-02-06&se=2026-03-13T10%3A30%3A30Z&sr=b&sp=r&sig=50OZJ3sULeVGrJlSn%2B6%2FwR4WGkMPV2A%2BNfQauARIWhA%3D",
+        "https://stfedcaseeus2.blob.core.windows.net/photoshop/outputs/variants/Fall-26-Tokyo-Sneaker-Drop/instagram-landscape/instagram-landscape.png?sv=2026-02-06&se=2026-03-13T10%3A30%3A30Z&sr=b&sp=r&sig=Sn9gTiJpYmKFmrBcReOFeV5rriUDAZozfU8X868VRdk%3D",
+        "https://stfedcaseeus2.blob.core.windows.net/photoshop/outputs/variants/Fall-26-Tokyo-Sneaker-Drop/facebook/facebook.png?sv=2026-02-06&se=2026-03-13T10%3A30%3A30Z&sr=b&sp=r&sig=5I59NK9fef9JI56GKE%2Bk5lk0H5Q%2BXDUc1ilArWNXfzc%3D",
+        "https://stfedcaseeus2.blob.core.windows.net/photoshop/outputs/variants/Fall-26-Tokyo-Sneaker-Drop/pinterest/pinterest.png?sv=2026-02-06&se=2026-03-13T10%3A30%3A30Z&sr=b&sp=r&sig=jDpe3H8Fgl6XoL9PW%2BSegzBNa03kbU6Ox0fLHlZMvOM%3D",
+        "https://stfedcaseeus2.blob.core.windows.net/photoshop/outputs/variants/Fall-26-Tokyo-Sneaker-Drop/twitter/twitter.png?sv=2026-02-06&se=2026-03-13T10%3A30%3A30Z&sr=b&sp=r&sig=9mvZfsJedYeWm6PnTZnwfkOmmtRQDLskufGqNmWu308%3D",
+        "https://stfedcaseeus2.blob.core.windows.net/photoshop/outputs/variants/Fall-26-Tokyo-Sneaker-Drop/linkedin/linkedin.png?sv=2026-02-06&se=2026-03-13T10%3A30%3A30Z&sr=b&sp=r&sig=C3vx9qEnQXntIdWRrfxezw4O%2FmNmHLhINq47mQxXLSA%3D",
+        "https://stfedcaseeus2.blob.core.windows.net/photoshop/outputs/variants/Fall-26-Tokyo-Sneaker-Drop/ooh/ooh.png?sv=2026-02-06&se=2026-03-13T10%3A30%3A31Z&sr=b&sp=r&sig=w7XOvQWire%2B1GwRc1NhP0cnitEbGn4VUeCOuKTeNQHs%3D"
+      ],
+      "createdAt": "2026-03-12T10:29:35.243Z"
     }
   ]
 }
