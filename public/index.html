@@ -81,6 +81,17 @@
         <label>Mask 2 URL (black = background, white = foot – used for PSD layer mask on foot layer)</label>
         <input type="url" id="mask2Url" name="mask2Url" value="https://stfedcaseeus2.blob.core.windows.net/source/mask2.png" placeholder="Public URL (required)" required />
       </div>
+      <div class="field full">
+        <label>Style</label>
+        <select id="stylePreset" name="stylePreset" aria-label="Visual style applied to both prompts">
+          <option value="Photorealistic" selected>Photorealistic</option>
+          <option value="Japanese Graphic Poster Style">Japanese Graphic Poster Style</option>
+          <option value="Minimalist">Minimalist</option>
+          <option value="Concept art">Concept art</option>
+          <option value="Anime">Anime</option>
+          <option value="Kawaii">Kawaii</option>
+        </select>
+      </div>
       <div class="prompt-group">
         <div class="field full">
           <label>Prompt 1: Background style preset</label>
@@ -393,25 +404,44 @@
     };
 
     const FOOT_SHOE_PROMPTS = {
-      harajuku: 'Photorealistic foot and lower leg wearing a modern sneaker, Harajuku street fashion style, colorful and playful, kawaii aesthetic, same camera angle and lighting as the original image, natural skin tones',
-      ginza: 'Photorealistic foot and lower leg wearing a modern sneaker, Ginza luxury style, refined and clean lines, high-end fashion aesthetic, same camera angle and lighting as the original image, natural skin tones',
-      shibuya: 'Photorealistic foot and lower leg wearing a modern sneaker, Shibuya urban streetwear, trendy youth culture, same camera angle and lighting as the original image, natural skin tones',
-      kyoto: 'Photorealistic foot and lower leg wearing a modern sneaker, Kyoto style, traditional-meets-modern, understated and cultural, same camera angle and lighting as the original image, natural skin tones',
-      minimal: 'Photorealistic foot and lower leg wearing a modern sneaker, Japanese minimalism, neutral tones, clean Muji-like aesthetic, same camera angle and lighting as the original image, natural skin tones',
-      streetwear: 'Photorealistic foot and lower leg wearing a modern sneaker, Japanese streetwear and sneaker culture, casual hype style, same camera angle and lighting as the original image, natural skin tones',
+      harajuku: 'Foot and lower leg wearing a modern sneaker, Harajuku street fashion style, colorful and playful, kawaii aesthetic, same camera angle and lighting as the original image, natural skin tones',
+      ginza: 'Foot and lower leg wearing a modern sneaker, Ginza luxury style, refined and clean lines, high-end fashion aesthetic, same camera angle and lighting as the original image, natural skin tones',
+      shibuya: 'Foot and lower leg wearing a modern sneaker, Shibuya urban streetwear, trendy youth culture, same camera angle and lighting as the original image, natural skin tones',
+      kyoto: 'Foot and lower leg wearing a modern sneaker, Kyoto style, traditional-meets-modern, understated and cultural, same camera angle and lighting as the original image, natural skin tones',
+      minimal: 'Foot and lower leg wearing a modern sneaker, Japanese minimalism, neutral tones, clean Muji-like aesthetic, same camera angle and lighting as the original image, natural skin tones',
+      streetwear: 'Foot and lower leg wearing a modern sneaker, Japanese streetwear and sneaker culture, casual hype style, same camera angle and lighting as the original image, natural skin tones',
     };
     const FOOT_SHOE_NEGATIVE_DEFAULT = 'cropped toes, extra limbs, distorted anatomy, neon, stylized, cartoon, artificial colors';
+    const STYLE_VALUES = ['Photorealistic', 'Japanese Graphic Poster Style', 'Minimalist', 'Concept art', 'Anime', 'Kawaii'];
     const footShoePromptPresetEl = document.getElementById('footShoePromptPreset');
     const footShoePromptEl = document.getElementById('footShoePrompt');
     const footShoeNegativeEl = document.getElementById('footShoeNegativePrompt');
+    const stylePresetEl = document.getElementById('stylePreset');
     if (footShoeNegativeEl && !footShoeNegativeEl.value.trim()) footShoeNegativeEl.value = FOOT_SHOE_NEGATIVE_DEFAULT;
+
+    function getBasePrompt(text) {
+      const t = (text || '').trim();
+      for (const s of STYLE_VALUES) {
+        const prefix = s + '. ';
+        if (t.startsWith(prefix)) return t.slice(prefix.length).trim();
+      }
+      return t;
+    }
+    function applyStyleToPrompt(base, style) {
+      const b = (base || '').trim();
+      return (style && style.trim()) ? style.trim() + '. ' + b : b;
+    }
+    function applyStyleToBothPrompts() {
+      const style = stylePresetEl ? stylePresetEl.value.trim() : '';
+      if (fillPromptInput) fillPromptInput.value = applyStyleToPrompt(getBasePrompt(fillPromptInput.value), style);
+      if (footShoePromptEl) footShoePromptEl.value = applyStyleToPrompt(getBasePrompt(footShoePromptEl.value), style);
+    }
 
     function updateFootPromptFromPreset() {
       if (footShoePromptPresetEl && footShoePromptEl) {
         const preset = footShoePromptPresetEl.value;
-        if (preset !== 'custom' && FOOT_SHOE_PROMPTS[preset]) {
-          footShoePromptEl.value = FOOT_SHOE_PROMPTS[preset];
-        }
+        const base = (preset !== 'custom' && FOOT_SHOE_PROMPTS[preset]) ? FOOT_SHOE_PROMPTS[preset] : getBasePrompt(footShoePromptEl.value);
+        footShoePromptEl.value = applyStyleToPrompt(base, stylePresetEl ? stylePresetEl.value : '');
       }
     }
     if (footShoePromptPresetEl) {
@@ -420,12 +450,15 @@
     }
 
     fillPromptPreset.addEventListener('change', () => {
-      if (fillPromptPreset.value !== 'custom') {
-        fillPromptInput.value = BACKGROUND_PROMPTS[fillPromptPreset.value] || '';
-      }
+      const base = (fillPromptPreset.value !== 'custom') ? (BACKGROUND_PROMPTS[fillPromptPreset.value] || '') : getBasePrompt(fillPromptInput.value);
+      fillPromptInput.value = applyStyleToPrompt(base, stylePresetEl ? stylePresetEl.value : '');
     });
     fillPromptPreset.value = 'harajuku_night';
-    fillPromptInput.value = BACKGROUND_PROMPTS.harajuku_night;
+    fillPromptInput.value = applyStyleToPrompt(BACKGROUND_PROMPTS.harajuku_night, stylePresetEl ? stylePresetEl.value : '');
+
+    if (stylePresetEl) {
+      stylePresetEl.addEventListener('change', applyStyleToBothPrompts);
+    }
 
     formSneaker.addEventListener('submit', async (e) => {
       e.preventDefault();

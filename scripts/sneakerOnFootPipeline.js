@@ -94,7 +94,7 @@ async function runPipeline(options = {}) {
   const footShoePrompt =
     options.footShoePrompt ||
     process.env.FOOT_SHOE_PROMPT ||
-    'Photorealistic foot and lower leg wearing a modern sneaker, Japanese street fashion style, Harajuku or Ginza aesthetic, same camera angle and lighting as the original image, natural skin tones, clean minimal look';
+    'Foot and lower leg wearing a modern sneaker, Japanese street fashion style, Harajuku or Ginza aesthetic, same camera angle and lighting as the original image, natural skin tones, clean minimal look';
   const footShoeNegativePrompt =
     options.footShoeNegativePrompt ||
     process.env.FOOT_SHOE_NEGATIVE_PROMPT ||
