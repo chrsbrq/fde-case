@@ -1,0 +1,50 @@
+{
+  "project": {
+    "id": "4566206088345604797",
+    "name": "628AmaranthPlatypus",
+    "title": "Project 128",
+    "org": {
+      "id": "27200",
+      "name": "Tech Marketing Development",
+      "ims_org_id": "33C1401053CF76370A490D4C@AdobeOrg"
+    },
+    "workspace": {
+      "id": "4566206088345638374",
+      "name": "Stage",
+      "title": "Stage",
+      "action_url": "https://27200-628amaranthplatypus-stage.adobeioruntime.net",
+      "app_url": "https://27200-628amaranthplatypus-stage.adobeio-static.net",
+      "details": {
+        "credentials": [
+          {
+            "id": "915266",
+            "name": "Credential_in_Project_128_-_Stage",
+            "integration_type": "oauth_server_to_server"
+          }
+        ],
+        "services": [
+          {
+            "code": "Firefly SDK - Enterprise - GA",
+            "name": "Firefly API - Firefly Services"
+          },
+          {
+            "code": "AdobeIOManagementAPISDK",
+            "name": "I/O Management API"
+          },
+          {
+            "code": "ImageCutoutV2SDK",
+            "name": "Remove Background - Firefly and Creative Cloud Automation"
+          },
+          {
+            "code": "PhotoshopCCESDK",
+            "name": "Photoshop API - Firefly Services"
+          }
+        ],
+        "events": {
+          "registrations": []
+        },
+        "mesh": {}
+      }
+    }
+  }
+}

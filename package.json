@@ -8,7 +8,8 @@
     "dev": "node server.js",
     "generate": "node scripts/generateVariants.js",
     "sneaker-on-foot": "node scripts/run-sneaker-on-foot.js",
-    "start": "node server.js"
+    "start": "node server.js",
+    "install:linux-sharp": "npm install --os=linux --cpu=x64 --include=optional sharp"
   },
   "dependencies": {
     "@azure/storage-blob": "^12.31.0",
@@ -16,5 +17,9 @@
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
     "sharp": "^0.33.0"
+  },
+  "optionalDependencies": {
+    "@img/sharp-linux-x64": "^0.33.0",
+    "@img/sharp-libvips-linux-x64": "^0.33.0"
   }
 }

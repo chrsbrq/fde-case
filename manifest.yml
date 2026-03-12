@@ -1,0 +1,27 @@
+# Adobe I/O Runtime – deploy with: aio app deploy
+# At deploy time, the CLI reads .env and injects the variables below as default params for all actions.
+# Ensure .env has: FIREFLY_SERVICES_CLIENT_ID, FIREFLY_SERVICES_CLIENT_SECRET, AZURE_STORAGE_* (if using Azure).
+packages:
+  __APP_PACKAGE__:
+    license: Apache-2.0
+    inputs:
+      FIREFLY_SERVICES_CLIENT_ID: $FIREFLY_SERVICES_CLIENT_ID
+      FIREFLY_SERVICES_CLIENT_SECRET: $FIREFLY_SERVICES_CLIENT_SECRET
+      AZURE_STORAGE_ACCOUNT_NAME: $AZURE_STORAGE_ACCOUNT_NAME
+      AZURE_STORAGE_ACCOUNT_KEY: $AZURE_STORAGE_ACCOUNT_KEY
+      AZURE_STORAGE_CONTAINER: $AZURE_STORAGE_CONTAINER
+    actions:
+      sneaker-on-foot:
+        function: actions/sneaker-on-foot/index.js
+        web: 'yes'
+        runtime: 'nodejs:20'
+        limits:
+          timeout: 600000
+          memorySize: 1024
+      generate-variants:
+        function: actions/generate-variants/index.js
+        web: 'yes'
+        runtime: 'nodejs:20'
+        limits:
+          timeout: 300000
+          memorySize: 1024

@@ -71,11 +71,11 @@
     <form id="formSneaker" class="form form-sneaker">
       <div class="field full">
         <label>Person photo URL (composition reference; foot/shoe kept)</label>
-        <input type="url" id="personUrl" name="personUrl" value="http://localhost:3000/person.png" placeholder="https://... or http://localhost:3000/person.png" required />
+        <input type="url" id="personUrl" name="personUrl" value="https://stscopezilladeveus1.blob.core.windows.net/photoshop/sneaker-on-foot/source/person.png" placeholder="Public URL (required for Runtime)" required />
       </div>
       <div class="field full">
         <label>Mask image URL (white = background to replace, black = foot/shoe region)</label>
-        <input type="url" id="maskUrl" name="maskUrl" value="http://localhost:3000/mask.png" placeholder="https://... or http://localhost:3000/mask.png" required />
+        <input type="url" id="maskUrl" name="maskUrl" value="https://stscopezilladeveus1.blob.core.windows.net/photoshop/sneaker-on-foot/source/mask.png" placeholder="Public URL (required for Runtime)" required />
       </div>
       <div class="prompt-group">
         <div class="field full">
@@ -116,7 +116,7 @@
         </div>
         <div class="field full">
           <label>Prompt 2 negative (optional) – e.g. cropped toes, extra limbs, distorted anatomy</label>
-          <input type="text" id="footShoeNegativePrompt" name="footShoeNegativePrompt" placeholder="cropped toes, extra limbs, distorted anatomy, neon, stylized" />
+          <input type="text" id="footShoeNegativePrompt" name="footShoeNegativePrompt" placeholder="cropped toes, extra limbs, distorted anatomy, stylized" />
         </div>
       </div>
       <div class="field full">
@@ -127,7 +127,7 @@
       </div>
       <div class="field full">
         <label>Sneaker render URL (transparent PNG)</label>
-        <input type="url" id="sneakerUrl" name="sneakerUrl" value="http://localhost:3000/sneaker.png" placeholder="https://... or http://localhost:3000/sneaker.png" required />
+        <input type="url" id="sneakerUrl" name="sneakerUrl" value="https://stscopezilladeveus1.blob.core.windows.net/photoshop/sneaker-on-foot/source/sneaker.png" placeholder="Public URL (required for Runtime)" required />
       </div>
       <div class="field full">
         <label class="checkbox">

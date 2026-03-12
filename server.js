@@ -1,5 +1,6 @@
 /**
  * Local server: POST /api/generate, GET /api/campaigns/:id/manifest, static UI and output.
+ * When USE_RUNTIME_ACTIONS=true, pipeline and variant flows are invoked as Adobe I/O Runtime actions.
  */
 
 import 'dotenv/config';
@@ -15,7 +16,46 @@ import { isStorageConfigured, getSignedUrlsForPhotoshop } from './lib/storageSig
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 3000;
 const OUTPUT_PATH = process.env.OUTPUT_PATH || path.join(__dirname, 'public', 'outputs');
+const USE_RUNTIME_ACTIONS = process.env.USE_RUNTIME_ACTIONS === 'true' || process.env.USE_RUNTIME_ACTIONS === '1';
+const RUNTIME_SNEAKER_ACTION_URL = process.env.RUNTIME_SNEAKER_ACTION_URL || '';
+const RUNTIME_GENERATE_ACTION_URL = process.env.RUNTIME_GENERATE_ACTION_URL || '';
 const { readSets, addSet, updateSetVariants } = await import('./lib/sets.js');
+
+async function invokeRuntimeAction(url, body) {
+  if (!url) throw new Error('Runtime action URL not set');
+  // Use .json suffix so the Runtime gateway returns plain JSON (avoids "Response is not valid 'message/http'")
+  const invokeUrl = url.includes('.json') ? url : url.replace(/\/?(\?|$)/, '.json$1');
+  const res = await fetch(invokeUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify(body),
+  });
+  const rawText = await res.text();
+  let data = {};
+  try {
+    data = rawText ? JSON.parse(rawText) : {};
+  } catch (_) {
+    data = {};
+  }
+  if (!res.ok) {
+    const msg = data.error || data.message || res.statusText || `Runtime action failed: ${res.status}`;
+    // Log full response to debug "Response is not valid 'application/json'"
+    const headersObj = {};
+    res.headers.forEach((v, k) => { headersObj[k] = v; });
+    const activationId = res.headers.get('x-openwhisk-activation-id');
+    console.error('[invokeRuntimeAction] FAIL', res.status, invokeUrl);
+    if (activationId) {
+      console.error('[invokeRuntimeAction] Inspect on Runtime: aio runtime activation get', activationId);
+      console.error('[invokeRuntimeAction] Or logs: aio runtime activation logs', activationId);
+    }
+    console.error('[invokeRuntimeAction] response headers:', JSON.stringify(headersObj, null, 2));
+    console.error('[invokeRuntimeAction] response body (raw, length ' + rawText.length + '):', rawText.length > 2000 ? rawText.slice(0, 2000) + '...' : rawText);
+    console.error('[invokeRuntimeAction] parsed data:', JSON.stringify(data, null, 2));
+    throw new Error(msg);
+  }
+  if (data.error) throw new Error(data.error);
+  return data;
+}
 
 if (!fs.existsSync(OUTPUT_PATH)) fs.mkdirSync(OUTPUT_PATH, { recursive: true });
 
@@ -30,7 +70,10 @@ function asyncHandler(fn) {
 
 function updateSetFromResult(heroUrl, result) {
   if (heroUrl && result?.generated?.length) {
-    const variantUrls = result.generated.map((g) => (g.url.startsWith('/') ? g.url : '/' + g.url));
+    const variantUrls = result.generated.map((g) => {
+      const u = g.url || '';
+      return u.startsWith('http') ? u : (u.startsWith('/') ? u : '/' + u);
+    });
     updateSetVariants(heroUrl, variantUrls);
   }
 }
@@ -38,6 +81,11 @@ function updateSetFromResult(heroUrl, result) {
 app.post('/api/generate', asyncHandler(async (req, res) => {
   try {
     const spec = req.body;
+    if (USE_RUNTIME_ACTIONS && RUNTIME_GENERATE_ACTION_URL) {
+      const result = await invokeRuntimeAction(RUNTIME_GENERATE_ACTION_URL, spec);
+      updateSetFromResult(spec.heroUrl, result);
+      return res.json(result);
+    }
     const result = await runResizeWithFill(spec);
     updateSetFromResult(spec.heroUrl, result);
     res.json(result);
@@ -69,10 +117,17 @@ app.post('/api/generate/stream', asyncHandler(async (req, res) => {
     if (typeof res.flush === 'function') res.flush();
   };
   try {
-    spec.onLog = (msg) => send('log', { msg });
-    const result = await runResizeWithFill(spec);
-    updateSetFromResult(spec.heroUrl, result);
-    send('result', result);
+    if (USE_RUNTIME_ACTIONS && RUNTIME_GENERATE_ACTION_URL) {
+      send('log', { msg: 'Running in Adobe I/O Runtime...' });
+      const result = await invokeRuntimeAction(RUNTIME_GENERATE_ACTION_URL, spec);
+      updateSetFromResult(spec.heroUrl, result);
+      send('result', result);
+    } else {
+      spec.onLog = (msg) => send('log', { msg });
+      const result = await runResizeWithFill(spec);
+      updateSetFromResult(spec.heroUrl, result);
+      send('result', result);
+    }
   } catch (e) {
     const message = e?.message || String(e);
     console.error('[POST /api/generate/stream]', message);
@@ -132,37 +187,52 @@ app.post('/api/sneaker-on-foot/stream', asyncHandler(async (req, res) => {
   };
 
   const runId = 'run-' + Date.now();
-  const pipelineOptions = buildPipelineOptions(body);
-  pipelineOptions.outDir = path.join(OUTPUT_PATH, runId);
-  pipelineOptions.onLog = (msg) => send('log', { msg });
 
   try {
-    const result = await runPipeline(pipelineOptions);
-    const finalPath = path.join(result.outDir, '04-final.png');
-    const heroPath = path.join(__dirname, 'public', 'hero.png');
-    if (fs.existsSync(finalPath)) {
-      fs.copyFileSync(finalPath, heroPath);
+    if (USE_RUNTIME_ACTIONS && RUNTIME_SNEAKER_ACTION_URL) {
+      send('log', { msg: 'Running in Adobe I/O Runtime...' });
+      const payload = buildPipelineOptions(body);
+      const result = await invokeRuntimeAction(RUNTIME_SNEAKER_ACTION_URL, payload);
+      const heroUrl = result.heroUrl || result.urls?.final;
+      const stepUrls = result.stepUrls || [result.urls?.before, result.urls?.afterFill, result.urls?.composite, result.urls?.final].filter(Boolean);
+      addSet(result.runId || runId, heroUrl, stepUrls);
+      send('result', {
+        runId: result.runId,
+        heroUrl,
+        outDir: result.outDir,
+        urls: result.urls || {},
+      });
+    } else {
+      const pipelineOptions = buildPipelineOptions(body);
+      pipelineOptions.outDir = path.join(OUTPUT_PATH, runId);
+      pipelineOptions.onLog = (msg) => send('log', { msg });
+      const result = await runPipeline(pipelineOptions);
+      const finalPath = path.join(result.outDir, '04-final.png');
+      const heroPath = path.join(__dirname, 'public', 'hero.png');
+      if (fs.existsSync(finalPath)) {
+        fs.copyFileSync(finalPath, heroPath);
+      }
+      const base = '/outputs/' + runId;
+      const stepUrls = [
+        base + '/01-before.png',
+        base + '/02-after-fill.png',
+        base + '/03-composite.png',
+        base + '/04-final.png',
+      ];
+      const heroUrl = base + '/04-final.png';
+      addSet(runId, heroUrl, stepUrls);
+      send('result', {
+        runId,
+        heroUrl,
+        outDir: result.outDir,
+        urls: {
+          before: stepUrls[0],
+          afterFill: stepUrls[1],
+          composite: stepUrls[2],
+          final: stepUrls[3],
+        },
+      });
     }
-    const base = '/outputs/' + runId;
-    const stepUrls = [
-      base + '/01-before.png',
-      base + '/02-after-fill.png',
-      base + '/03-composite.png',
-      base + '/04-final.png',
-    ];
-    const heroUrl = base + '/04-final.png';
-    addSet(runId, heroUrl, stepUrls);
-    send('result', {
-      runId,
-      heroUrl,
-      outDir: result.outDir,
-      urls: {
-        before: stepUrls[0],
-        afterFill: stepUrls[1],
-        composite: stepUrls[2],
-        final: stepUrls[3],
-      },
-    });
   } catch (e) {
     const message = e?.message || String(e);
     console.error('[POST /api/sneaker-on-foot/stream] ERROR:', message);
@@ -178,12 +248,25 @@ app.post('/api/sneaker-on-foot', asyncHandler(async (req, res) => {
     if (!body.personPhotoUrl || !body.maskImageUrl || !body.sneakerPngUrl) {
       return res.status(400).json({ error: 'Missing personPhotoUrl, maskImageUrl, or sneakerPngUrl' });
     }
-    if (body.usePhotoshopApi === true && !isStorageConfigured()) {
+    if (body.usePhotoshopApi === true && !isStorageConfigured() && !USE_RUNTIME_ACTIONS) {
       return res.status(400).json({
         error: 'Photoshop API placement requires Azure storage. Set AZURE_STORAGE_* in .env (see docs/PHOTOSHOP_API_PLACE_LAYER.md).',
       });
     }
     const runId = 'run-' + Date.now();
+    if (USE_RUNTIME_ACTIONS && RUNTIME_SNEAKER_ACTION_URL) {
+      const payload = buildPipelineOptions(body);
+      const result = await invokeRuntimeAction(RUNTIME_SNEAKER_ACTION_URL, payload);
+      const heroUrl = result.heroUrl || result.urls?.final;
+      const stepUrls = result.stepUrls || [result.urls?.before, result.urls?.afterFill, result.urls?.composite, result.urls?.final].filter(Boolean);
+      addSet(result.runId || runId, heroUrl, stepUrls);
+      return res.json({
+        runId: result.runId,
+        heroUrl,
+        outDir: result.outDir,
+        urls: result.urls || {},
+      });
+    }
     const pipelineOptions = buildPipelineOptions(body);
     pipelineOptions.outDir = path.join(OUTPUT_PATH, runId);
     const result = await runPipeline(pipelineOptions);
@@ -246,6 +329,9 @@ app.use((err, req, res, next) => {
 
 app.listen(PORT, () => {
   console.log(`Server at http://localhost:${PORT}`);
+  if (USE_RUNTIME_ACTIONS) {
+    console.log('  Using Adobe I/O Runtime actions for pipeline and generate.');
+  }
   console.log('  POST /api/generate             – run variant generation (JSON)');
   console.log('  POST /api/generate/stream      – run variant generation (SSE + log)');
   console.log('  POST /api/sneaker-on-foot     – run sneaker-on-foot pipeline (JSON response)');

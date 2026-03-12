@@ -1,0 +1,32 @@
+# App Builder app config – required so "aio app deploy" deploys actions (not just the package).
+# Package name must match the deployed package (e.g. agentic-assembly-line-demo-1.0.0 from aio rt package list).
+# See https://developer.adobe.com/app-builder/docs/guides/app_builder_guides/deployment/deployment
+application:
+  actions: actions
+  runtimeManifest:
+    packages:
+      agentic-assembly-line-demo-1.0.0:
+        license: Apache-2.0
+        inputs:
+          FIREFLY_SERVICES_CLIENT_ID: $FIREFLY_SERVICES_CLIENT_ID
+          FIREFLY_SERVICES_CLIENT_SECRET: $FIREFLY_SERVICES_CLIENT_SECRET
+          AZURE_STORAGE_ACCOUNT_NAME: $AZURE_STORAGE_ACCOUNT_NAME
+          AZURE_STORAGE_ACCOUNT_KEY: $AZURE_STORAGE_ACCOUNT_KEY
+          AZURE_STORAGE_CONTAINER: $AZURE_STORAGE_CONTAINER
+        actions:
+          sneaker-on-foot:
+            function: actions/sneaker-on-foot/index.js
+            web: 'yes'
+            runtime: nodejs:20
+            limits:
+              timeout: 600000
+              memorySize: 1024
+              concurrency: 1
+          generate-variants:
+            function: actions/generate-variants/index.js
+            web: 'yes'
+            runtime: nodejs:20
+            limits:
+              timeout: 300000
+              memorySize: 1024
+              concurrency: 1

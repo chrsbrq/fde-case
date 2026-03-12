@@ -28,7 +28,8 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { uploadImage, fillImageAsync, pollUntilComplete, nearestFillSize } from '../lib/firefly.js';
 import { addLayerAndRender, pollPhotoshopJob } from '../lib/photoshopApi.js';
-import sharp from 'sharp';
+// Sharp is lazy-loaded inside runPipeline to avoid "Cannot initialize the action more than once"
+// (native binaries must not run at module load in Adobe I/O Runtime).
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const OUT_DIR = process.env.OUT_DIR || path.join(process.cwd(), 'public', 'outputs');
@@ -39,7 +40,7 @@ const ALPHA_THRESHOLD = 16; // alpha above this = visible content for sneaker cr
 /**
  * Get bounding box of non-transparent pixels in image (RGBA). Returns { left, top, width, height } or null.
  */
-async function getContentBbox(buf) {
+async function getContentBbox(sharp, buf) {
   const { data, info } = await sharp(buf)
     .ensureAlpha()
     .raw()
@@ -79,7 +80,7 @@ async function fetchBuffer(url) {
  * Get bounding box of protected (black) region in mask. Mask is resized to match person image.
  * Returns { minX, minY, maxX, maxY, width, height } or null if no protected pixels.
  */
-async function getProtectedBbox(maskBuf, targetWidth, targetHeight) {
+async function getProtectedBbox(sharp, maskBuf, targetWidth, targetHeight) {
   const { data, info } = await sharp(maskBuf)
     .resize(targetWidth, targetHeight, { fit: 'fill' })
     .grayscale()
@@ -118,6 +119,9 @@ function log(options, msg) {
 }
 
 async function runPipeline(options = {}) {
+  // Lazy-load Sharp so native binaries are not initialized at module load (fixes "Cannot initialize the action more than once" in Adobe I/O Runtime).
+  const sharp = (await import('sharp')).default;
+
   const personUrl = options.personPhotoUrl || process.env.PERSON_PHOTO_URL;
   const maskUrl = options.maskImageUrl || process.env.MASK_IMAGE_URL;
   const sneakerUrl = options.sneakerPngUrl || process.env.SNEAKER_PNG_URL;
@@ -299,7 +303,7 @@ async function runPipeline(options = {}) {
         .toBuffer();
     }
   } else {
-    const bbox = await getProtectedBbox(maskBuf, width, height);
+    const bbox = await getProtectedBbox(sharp, maskBuf, width, height);
     if (bbox) {
       log(options, `Protected region (black) bbox: ${bbox.width}×${bbox.height} at (${bbox.minX},${bbox.minY})`);
     } else {
